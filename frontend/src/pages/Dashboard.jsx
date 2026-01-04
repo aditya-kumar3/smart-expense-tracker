@@ -69,25 +69,21 @@ import {
 // 🎨 AURORA LUXURY COLOR SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════════
 const AURORA_COLORS = {
-  // Primary Aurora Gradients
   aurora: {
     start: "#667eea",
     mid: "#764ba2",
     end: "#f093fb",
   },
-  // Ocean Blues
   ocean: {
     deep: "#0c1445",
     mid: "#1a237e",
     light: "#3949ab",
   },
-  // Luxury Golds
   gold: {
     dark: "#bf953f",
     mid: "#fcf6ba",
     light: "#fff8dc",
   },
-  // Crystal Accents
   crystal: {
     pink: "#ff6b9d",
     purple: "#c471ed",
@@ -95,7 +91,6 @@ const AURORA_COLORS = {
     green: "#2af598",
     orange: "#f5af19",
   },
-  // Glass Effects
   glass: {
     white: "rgba(255, 255, 255, 0.08)",
     border: "rgba(255, 255, 255, 0.12)",
@@ -111,7 +106,6 @@ const CHART_COLORS = ["#667eea", "#f093fb", "#2af598", "#12c2e9", "#f5af19", "#f
 const AuroraBackground = () => {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Base Gradient */}
       <div
         className="absolute inset-0"
         style={{
@@ -125,7 +119,6 @@ const AuroraBackground = () => {
         }}
       />
 
-      {/* Animated Aurora Waves */}
       <svg className="absolute inset-0 w-full h-full opacity-30" preserveAspectRatio="none">
         <defs>
           <linearGradient id="aurora1" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -147,7 +140,6 @@ const AuroraBackground = () => {
           </filter>
         </defs>
 
-        {/* Aurora Wave 1 */}
         <motion.path
           d="M0,100 Q250,50 500,100 T1000,100 T1500,100 T2000,100"
           fill="none"
@@ -172,7 +164,6 @@ const AuroraBackground = () => {
           style={{ transform: "translateY(10%)" }}
         />
 
-        {/* Aurora Wave 2 */}
         <motion.path
           d="M0,200 Q300,150 600,200 T1200,200 T1800,200"
           fill="none"
@@ -197,7 +188,6 @@ const AuroraBackground = () => {
         />
       </svg>
 
-      {/* Floating Crystals */}
       {Array.from({ length: 20 }).map((_, i) => (
         <motion.div
           key={`crystal-${i}`}
@@ -234,7 +224,6 @@ const AuroraBackground = () => {
         </motion.div>
       ))}
 
-      {/* Mesh Grid */}
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -246,7 +235,6 @@ const AuroraBackground = () => {
         }}
       />
 
-      {/* Radial Glow Centers */}
       <motion.div
         className="absolute w-[1000px] h-[1000px] rounded-full"
         style={{
@@ -333,15 +321,6 @@ const LuxuryGlassCard = ({
     setMousePosition({ x, y });
   };
 
-  const rotateX = useSpring(useTransform(useMotionValue(mousePosition.y), [-0.5, 0.5], [8, -8]), {
-    stiffness: 300,
-    damping: 30,
-  });
-  const rotateY = useSpring(useTransform(useMotionValue(mousePosition.x), [-0.5, 0.5], [-8, 8]), {
-    stiffness: 300,
-    damping: 30,
-  });
-
   return (
     <motion.div
       ref={cardRef}
@@ -373,7 +352,6 @@ const LuxuryGlassCard = ({
         ${className}
       `}
     >
-      {/* Glass Background */}
       <div
         className="absolute inset-0 rounded-[28px]"
         style={{
@@ -381,7 +359,6 @@ const LuxuryGlassCard = ({
         }}
       />
 
-      {/* Border Gradient */}
       <div
         className="absolute inset-0 rounded-[28px] transition-opacity duration-500"
         style={{
@@ -395,7 +372,6 @@ const LuxuryGlassCard = ({
         }}
       />
 
-      {/* Spotlight Effect */}
       <motion.div
         className="absolute inset-0 rounded-[28px] opacity-0 transition-opacity duration-500"
         style={{
@@ -404,7 +380,6 @@ const LuxuryGlassCard = ({
         }}
       />
 
-      {/* Top Highlight */}
       <div
         className="absolute top-0 left-[10%] right-[10%] h-[1px] rounded-full"
         style={{
@@ -412,7 +387,6 @@ const LuxuryGlassCard = ({
         }}
       />
 
-      {/* Moving Shimmer */}
       <motion.div
         className="absolute inset-0 rounded-[28px]"
         style={{
@@ -422,7 +396,6 @@ const LuxuryGlassCard = ({
         transition={{ duration: 1.5, ease: "easeInOut" }}
       />
 
-      {/* Glow Effect */}
       <motion.div
         className="absolute -inset-1 rounded-[32px] transition-opacity duration-500"
         style={{
@@ -433,7 +406,6 @@ const LuxuryGlassCard = ({
         }}
       />
 
-      {/* Content */}
       <div className="relative z-10" style={{ transform: "translateZ(30px)" }}>
         {children}
       </div>
@@ -557,7 +529,6 @@ const LuxuryButton = ({
         boxShadow: `0 10px 40px -10px ${config.shadow}`,
       }}
     >
-      {/* Shine Effect */}
       <motion.div
         className="absolute inset-0"
         style={{
@@ -567,7 +538,6 @@ const LuxuryButton = ({
         transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
       />
 
-      {/* Top Highlight */}
       <div
         className="absolute top-0 left-[20%] right-[20%] h-[1px]"
         style={{
@@ -657,7 +627,6 @@ const LuxuryInput = ({
         }}
       />
 
-      {/* Bottom Accent Line */}
       <motion.div
         className="absolute bottom-0 left-1/2 h-[2px] rounded-full"
         style={{ background: `linear-gradient(90deg, transparent, ${config.accent}, transparent)` }}
@@ -666,7 +635,6 @@ const LuxuryInput = ({
         transition={{ duration: 0.3 }}
       />
 
-      {/* Glow Effect */}
       <motion.div
         className="absolute inset-0 rounded-2xl pointer-events-none"
         style={{
@@ -808,31 +776,48 @@ const AnimatedNumber = ({ value, prefix = "₹", duration = 2, className = "" })
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
+    // 🔥 FIX: Handle edge cases
+    if (value === 0 || isNaN(value)) {
+      setDisplayValue(0);
+      return;
+    }
+
     let startTime;
     let animationFrame;
 
     const animate = (timestamp) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+
+      // 🔥 FIX: When animation completes, set EXACT value
+      if (progress >= 1) {
+        setDisplayValue(Math.round(value)); // Exact final value!
+        return; // Stop animation
+      }
+
       const easeOutExpo = 1 - Math.pow(2, -10 * progress);
       setDisplayValue(value * easeOutExpo);
-
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(animate);
-      }
+      animationFrame = requestAnimationFrame(animate);
     };
 
     animationFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrame);
+    
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
   }, [value, duration]);
+
+  // 🔥 FIX: Always round the display value
+  const finalValue = Math.round(displayValue);
 
   return (
     <span className={className}>
-      {prefix} {displayValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+      {prefix} {finalValue.toLocaleString("en-IN")}
     </span>
   );
 };
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🎯 LUXURY PROGRESS RING
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -843,7 +828,6 @@ const LuxuryProgressRing = ({ percentage, size = 160, strokeWidth = 12 }) => {
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* Outer Glow */}
       <motion.div
         className="absolute inset-[-20px] rounded-full"
         style={{
@@ -854,7 +838,6 @@ const LuxuryProgressRing = ({ percentage, size = 160, strokeWidth = 12 }) => {
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
       />
 
-      {/* Inner Glass Circle */}
       <div
         className="absolute inset-[15px] rounded-full"
         style={{
@@ -881,7 +864,6 @@ const LuxuryProgressRing = ({ percentage, size = 160, strokeWidth = 12 }) => {
           </filter>
         </defs>
 
-        {/* Background Track */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -891,7 +873,6 @@ const LuxuryProgressRing = ({ percentage, size = 160, strokeWidth = 12 }) => {
           fill="none"
         />
 
-        {/* Progress Arc */}
         <motion.circle
           cx={size / 2}
           cy={size / 2}
@@ -908,7 +889,6 @@ const LuxuryProgressRing = ({ percentage, size = 160, strokeWidth = 12 }) => {
         />
       </svg>
 
-      {/* Center Content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
@@ -1046,7 +1026,6 @@ const LuxuryStatCard = ({ title, value, icon, trend, trendValue, variant = "auro
         group
       `}
     >
-      {/* Hover Glow */}
       <motion.div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
@@ -1054,7 +1033,6 @@ const LuxuryStatCard = ({ title, value, icon, trend, trendValue, variant = "auro
         }}
       />
 
-      {/* Decorative Element */}
       <div
         className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-20 group-hover:opacity-30 transition-opacity"
         style={{ background: config.glow }}
@@ -1134,19 +1112,48 @@ function Dashboard() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // State
+  // State - FIXED: Only store transactions, calculate rest using useMemo
   // ─────────────────────────────────────────────────────────────────────────────
-  const [summary, setSummary] = useState({
-    totalIncome: 0,
-    totalExpense: 0,
-    balance: 0,
-    transactions: [],
-  });
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showBalance, setShowBalance] = useState(true);
 
-  const remainingFromIncome = (summary?.totalIncome || 0) - (summary?.totalExpense || 0);
+  // 🔥 AUTO-CALCULATED SUMMARY - This will NEVER be wrong!
+ // 🔥 FIXED: useMemo with Math.round()
+const summary = useMemo(() => {
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  transactions.forEach((t) => {
+    // 🔥 FIX: Round the amount to avoid floating point issues
+    const amt = Math.round(Math.abs(Number(t.amount) || 0));
+    const type = (t.type || "").toLowerCase().trim();
+
+    if (type === "income") {
+      totalIncome += amt;
+    } else if (type === "expense") {
+      totalExpense += amt;
+    }
+  });
+
+  // 🔥 FIX: Round final values
+  totalIncome = Math.round(totalIncome);
+  totalExpense = Math.round(totalExpense);
+  const balance = Math.round(totalIncome - totalExpense);
+
+  console.log("📊 Summary:", { totalIncome, totalExpense, balance });
+
+  return {
+    transactions,
+    totalIncome,
+    totalExpense,
+    balance,
+  };
+}, [transactions]);
+
+  // Remaining from income (savings)
+  const remainingFromIncome = summary.totalIncome - summary.totalExpense;
 
   const [form, setForm] = useState({
     amount: "",
@@ -1172,7 +1179,7 @@ function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Data Loading
+  // Data Loading - FIXED
   // ─────────────────────────────────────────────────────────────────────────────
   const loadSummary = useCallback(async () => {
     try {
@@ -1183,7 +1190,24 @@ function Dashboard() {
         month: now.getMonth() + 1,
         year: now.getFullYear(),
       });
-      setSummary(data);
+
+      // 🔥 FIX: Handle both array and object response from API
+      let txList = [];
+      
+      if (Array.isArray(data)) {
+        // API returns array directly
+        txList = data;
+      } else if (data && Array.isArray(data.transactions)) {
+        // API returns { transactions: [], ... }
+        txList = data.transactions;
+      } else if (data && typeof data === 'object') {
+        // Try to find transactions in response
+        txList = data.data || data.items || [];
+      }
+
+      console.log("📦 Loaded Transactions:", txList.length, txList);
+      setTransactions(txList);
+
     } catch (err) {
       console.error("Summary load error:", err);
       setError(err.message || "Failed to load data");
@@ -1245,24 +1269,30 @@ function Dashboard() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  // 🔥 FIXED: handleAdd function
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
       setError("");
       setIsSubmitting(true);
 
+      // 🔥 Always send positive amount, type determines income/expense
       const payload = {
-        userId: user.id,
-        amount: Number(form.amount),
-        type: form.type,
-        category: form.category,
-        paymentMethod: form.paymentMethod,
-        note: form.note,
-        source: form.type === "income" ? form.source : undefined,
-      };
+      userId: user.id,
+      amount: Math.round(Math.abs(Number(form.amount))), // Integer only!
+      type: form.type.toLowerCase().trim(),
+      category: form.category,
+      paymentMethod: form.paymentMethod,
+      note: form.note,
+      source: form.type === "income" ? form.source : undefined,
+    };
+
+      console.log("📤 Sending:", payload);
+
 
       await createTransaction(payload);
 
+      // Reset form
       setForm({
         amount: "",
         type: "expense",
@@ -1272,6 +1302,7 @@ function Dashboard() {
         source: "",
       });
 
+      // Reload data
       await loadSummary();
       await loadAlerts();
 
@@ -1318,7 +1349,7 @@ function Dashboard() {
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Computed
+  // Computed - FIXED
   // ─────────────────────────────────────────────────────────────────────────────
   const goal = goalStatus?.goal || null;
   const progress = goalStatus?.progress || null;
@@ -1326,26 +1357,50 @@ function Dashboard() {
 
   const monthLabel = new Date().toLocaleString("default", { month: "long", year: "numeric" });
 
+  // 🔥 FIXED: Category data for pie chart - ONLY expenses
   const categoryData = useMemo(() => {
     const map = {};
+
     (summary.transactions || []).forEach((t) => {
-      if (t.type === "income") return;
+      // Only count expenses for category breakdown
+      const type = (t.type || "").toLowerCase().trim();
+      if (type !== "expense") return;
+
       const cat = t.category || "Other";
-      map[cat] = (map[cat] || 0) + (Number(t.amount) || 0);
+      const amt = Math.abs(Number(t.amount) || 0);
+
+      map[cat] = (map[cat] || 0) + amt;
     });
-    return Object.entries(map).map(([name, value]) => ({ name, value }));
+
+    return Object.entries(map).map(([name, value]) => ({
+      name,
+      value,
+    }));
   }, [summary.transactions]);
 
+  // 🔥 FIXED: Timeline data for area chart
   const timelineData = useMemo(() => {
     const txs = [...(summary.transactions || [])].sort(
       (a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt)
     );
+
     let running = 0;
+
     return txs.map((t) => {
-      const amt = Number(t.amount) || 0;
-      running += t.type === "income" ? amt : -amt;
+      const amt = Math.abs(Number(t.amount) || 0);
+      const type = (t.type || "").toLowerCase().trim();
+
+      if (type === "income") {
+        running += amt;
+      } else if (type === "expense") {
+        running -= amt;
+      }
+
       return {
-        date: new Date(t.date || t.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
+        date: new Date(t.date || t.createdAt).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+        }),
         value: running,
       };
     });
@@ -1374,7 +1429,6 @@ function Dashboard() {
   const sourceOptions = [
     { value: "salary", label: "💼 Salary" },
     { value: "freelance", label: "💻 Freelance" },
-    { value: "investment", label: "📈 Investment" },
     { value: "other", label: "📦 Other" },
   ];
 
@@ -1432,7 +1486,6 @@ function Dashboard() {
           className="flex flex-wrap items-center justify-between gap-4 mb-10"
         >
           <div className="flex items-center gap-5">
-            {/* Logo */}
             <motion.div
               whileHover={{ scale: 1.05, rotate: 5 }}
               className="relative p-4 rounded-3xl"
@@ -1693,7 +1746,7 @@ function Dashboard() {
                   {categoryData.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-white/20">
                       <PieChartIcon size={60} className="mb-4 opacity-30" />
-                      <p className="text-sm">No data yet</p>
+                      <p className="text-sm">No expense data yet</p>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
@@ -1805,39 +1858,45 @@ function Dashboard() {
                 </div>
               ) : (
                 <div className="space-y-3 max-h-80 overflow-y-auto pr-2 luxury-scrollbar">
-                  {summary.transactions.slice(0, 8).map((t, i) => (
-                    <motion.div
-                      key={t._id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      whileHover={{ scale: 1.01, x: 5 }}
-                      className="flex items-center justify-between p-4 rounded-2xl transition-all duration-300"
-                      style={{
-                        background: "rgba(255,255,255,0.02)",
-                        border: "1px solid rgba(255,255,255,0.05)",
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-2.5 rounded-xl ${
-                            t.type === "income" ? "bg-[#2af598]/20 text-[#2af598]" : "bg-[#ff6b9d]/20 text-[#ff6b9d]"
-                          }`}
-                        >
-                          {t.type === "income" ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
+                  {summary.transactions.slice(0, 8).map((t, i) => {
+                    const type = (t.type || "").toLowerCase().trim();
+                    const isIncome = type === "income";
+                    const amount = Math.abs(Number(t.amount) || 0);
+                    
+                    return (
+                      <motion.div
+                        key={t._id || i}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        whileHover={{ scale: 1.01, x: 5 }}
+                        className="flex items-center justify-between p-4 rounded-2xl transition-all duration-300"
+                        style={{
+                          background: "rgba(255,255,255,0.02)",
+                          border: "1px solid rgba(255,255,255,0.05)",
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`p-2.5 rounded-xl ${
+                              isIncome ? "bg-[#2af598]/20 text-[#2af598]" : "bg-[#ff6b9d]/20 text-[#ff6b9d]"
+                            }`}
+                          >
+                            {isIncome ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-white">{t.category || "General"}</p>
+                            <p className="text-xs text-white/40">
+                              {t.paymentMethod || "N/A"} • {new Date(t.date || t.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-white">{t.category || "General"}</p>
-                          <p className="text-xs text-white/40">
-                            {t.paymentMethod || "N/A"} • {new Date(t.date || t.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <GradientText variant={t.type === "income" ? "crystal" : "pink"} className="text-lg font-bold">
-                        {t.type === "income" ? "+" : "-"} ₹{Number(t.amount).toLocaleString("en-IN")}
-                      </GradientText>
-                    </motion.div>
-                  ))}
+                        <GradientText variant={isIncome ? "crystal" : "pink"} className="text-lg font-bold">
+                          {isIncome ? "+" : "-"} ₹{amount.toLocaleString("en-IN")}
+                        </GradientText>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </LuxuryGlassCard>

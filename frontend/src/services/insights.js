@@ -1,9 +1,9 @@
-// frontend/src/services/insights.js
-import { API_BASE_URL } from "./api";
+const BASE_URL =
+  "https://smart-expense-tracker-0fnu.onrender.com";
 
 export async function fetchInsights(userId) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/insights/summary`, {
+    const res = await fetch(`${BASE_URL}/api/insights/summary`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),

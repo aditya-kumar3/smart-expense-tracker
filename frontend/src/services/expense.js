@@ -1,4 +1,6 @@
-const API_URL = "http://localhost:5000/api/expenses";
+const API_URL =
+  "https://smart-expense-tracker-0fnu.onrender.com/api/expenses";
+
 
 export async function addExpense(data) {
   const res = await fetch(`${API_URL}/add`, {

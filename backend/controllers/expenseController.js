@@ -1,7 +1,8 @@
-// backend/controllers/expenseController.js
-const Expense = require("../models/Expense");
+const Expense = require ("../models/Expense");
 
-// -------------------- ADD EXPENSE / INCOME --------------------
+/* =========================
+   ADD EXPENSE / INCOME
+========================= */
 async function addExpense(req, res) {
   try {
     const {
@@ -13,7 +14,7 @@ async function addExpense(req, res) {
       note,
       date,
       title,
-      source, // 👈 NEW (salary | freelance | other)
+      source, // salary | freelance | other
     } = req.body;
 
     if (!userId || !amount || !type) {
@@ -23,11 +24,10 @@ async function addExpense(req, res) {
       });
     }
 
-    // income ke liye source mandatory
     if (type === "income" && !source) {
       return res.status(400).json({
         success: false,
-        message: "Income ke liye source (salary/freelance/other) required hai.",
+        message: "Income ke liye source required hai.",
       });
     }
 
@@ -39,9 +39,9 @@ async function addExpense(req, res) {
     const expense = await Expense.create({
       userId,
       title: safeTitle,
-      amount: Number(amount),
+      amount: Math.abs(Number(amount)), // 🔥 normalize
       type,
-      source: type === "income" ? source : null, // 👈 core logic
+      source: type === "income" ? source : null,
       category: category || "General",
       paymentMethod: paymentMethod || "N/A",
       note: note || "",
@@ -61,20 +61,35 @@ async function addExpense(req, res) {
   }
 }
 
-// -------------------- LIST EXPENSES --------------------
+/* =========================
+   LIST TRANSACTIONS
+========================= */
 async function listExpenses(req, res) {
   try {
     const { userId } = req.query;
-    const query = {};
-    if (userId) query.userId = userId;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId required",
+      });
+    }
 
-    const expenses = await Expense.find(query)
+    const expenses = await Expense.find({ userId })
       .sort({ date: -1 })
       .lean();
 
+    // 🔥 UI friendly sign
+    const formatted = expenses.map((t) => ({
+      ...t,
+      displayAmount:
+        t.type === "income"
+          ? `+₹${t.amount}`
+          : `-₹${t.amount}`,
+    }));
+
     return res.json({
       success: true,
-      expenses,
+      expenses: formatted,
     });
   } catch (err) {
     console.error("List expenses error:", err);
@@ -85,7 +100,9 @@ async function listExpenses(req, res) {
   }
 }
 
-// -------------------- MONTHLY SUMMARY --------------------
+/* =========================
+   MONTHLY SUMMARY (FIXED)
+========================= */
 async function getMonthlySummary(req, res) {
   try {
     const { userId, month, year } = req.query;
@@ -93,7 +110,7 @@ async function getMonthlySummary(req, res) {
     if (!userId || !month || !year) {
       return res.status(400).json({
         success: false,
-        message: "userId, month aur year required hain summary ke liye.",
+        message: "userId, month aur year required hain.",
       });
     }
 
@@ -116,18 +133,28 @@ async function getMonthlySummary(req, res) {
     let otherIncome = 0;
 
     transactions.forEach((t) => {
-      const amt = Number(t.amount) || 0;
+      const amt = Math.abs(Number(t.amount) || 0);
 
       if (t.type === "income") {
         totalIncome += amt;
         if (t.source === "salary") salaryIncome += amt;
         else otherIncome += amt;
-      } else {
+      }
+
+      if (t.type === "expense") {
         totalExpense += amt;
       }
     });
 
     const balance = totalIncome - totalExpense;
+
+    const formatted = transactions.map((t) => ({
+      ...t,
+      displayAmount:
+        t.type === "income"
+          ? `+₹${t.amount}`
+          : `-₹${t.amount}`,
+    }));
 
     return res.json({
       success: true,
@@ -136,7 +163,7 @@ async function getMonthlySummary(req, res) {
       otherIncome,
       totalExpense,
       balance,
-      transactions,
+      transactions: formatted,
     });
   } catch (err) {
     console.error("Monthly summary error:", err);

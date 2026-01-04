@@ -24,7 +24,7 @@ const expenseSchema = new mongoose.Schema(
     // 🔥 NEW: income source (sirf income ke liye use hoga)
     source: {
       type: String,
-      enum: ["salary", "freelance", "other"],
+      enum: ["salary", "freelance","investment", "other"],
       default: null,
     },
 

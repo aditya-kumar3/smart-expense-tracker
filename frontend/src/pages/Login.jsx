@@ -32,7 +32,9 @@ import {
   Rocket,
 } from "lucide-react";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL =
+  "https://smart-expense-tracker-0fnu.onrender.com";
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🎨 AURORA LUXURY COLOR SYSTEM

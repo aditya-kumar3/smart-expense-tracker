@@ -1,6 +1,8 @@
 // frontend/src/services/goals.js
 
-const API_URL = "http://localhost:5000/api/goals";
+const API_URL =
+  "https://smart-expense-tracker-0fnu.onrender.com/api/goals";
+
 
 export async function saveGoal(payload) {
   const res = await fetch(API_URL, {

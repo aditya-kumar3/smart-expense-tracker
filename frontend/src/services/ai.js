@@ -1,5 +1,7 @@
 // frontend/src/services/ai.js
-const BASE_URL = "http://localhost:5000";
+const BASE_URL =
+  "http://localhost:5000";
+
 
 export async function fetchAiInsights(userId) {
   const res = await fetch(`${BASE_URL}/api/ai/insights`, {

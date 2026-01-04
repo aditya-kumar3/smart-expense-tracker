@@ -1,11 +1,12 @@
 // frontend/src/services/auth.js
 
-import { API_BASE_URL } from "./api";
+const BASE_URL =
+  "https://smart-expense-tracker-0fnu.onrender.com";
 
 // LOGIN
 export async function loginUser(credentials) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    const res = await fetch(`${BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
@@ -18,14 +19,13 @@ export async function loginUser(credentials) {
     try {
       data = JSON.parse(raw);
     } catch (e) {
-      throw new Error("Server ne JSON ke bajay HTML / invalid data bheja.");
+      throw new Error("Server ne JSON ke bajay invalid response bheja.");
     }
 
     if (!res.ok) {
       throw new Error(data?.message || "Login failed");
     }
 
-    // Expecting: { token, user: { id, name, email } }
     if (data.token && data.user) {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
@@ -44,10 +44,10 @@ export async function loginUser(credentials) {
   }
 }
 
-// SIGNUP / REGISTER
+// SIGNUP
 export async function registerUser(payload) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    const res = await fetch(`${BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -60,14 +60,13 @@ export async function registerUser(payload) {
     try {
       data = JSON.parse(raw);
     } catch (e) {
-      throw new Error("Server ne JSON ke bajay HTML / invalid data bheja.");
+      throw new Error("Server ne JSON ke bajay invalid response bheja.");
     }
 
     if (!res.ok) {
       throw new Error(data?.message || "Signup failed");
     }
 
-    // Optionally yahan bhi token/user mil sakta hai
     if (data.token && data.user) {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));

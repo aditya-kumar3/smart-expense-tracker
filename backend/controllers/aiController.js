@@ -5,6 +5,11 @@ exports.getAiInsight = async (req, res) => {
   try {
     const { userId } = req.body;
 
+    // 🔥 DEBUG LOG - Ye confirm karega ki NEW code chal raha hai
+    console.log("========================================");
+    console.log("🚀 NEW AI CONTROLLER VERSION 2.0");
+    console.log("========================================");
+
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -15,13 +20,18 @@ exports.getAiInsight = async (req, res) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const expenses = await Expense.find({
+    const transactions = await Expense.find({
       userId,
       date: { $gte: startOfMonth },
     }).lean();
 
-    // agar koi expense hi nahi hai, 200 bhejo but text empty
-    if (!expenses.length) {
+    // 🔥 DEBUG: Print each transaction
+    console.log("📊 Total Transactions:", transactions.length);
+    transactions.forEach((t, i) => {
+      console.log(`   ${i + 1}. Type: "${t.type}" | Amount: ${t.amount} | Category: ${t.category}`);
+    });
+
+    if (!transactions.length) {
       return res.json({
         success: true,
         text: "",
@@ -29,29 +39,63 @@ exports.getAiInsight = async (req, res) => {
       });
     }
 
-    const total = expenses.reduce(
-      (sum, e) => sum + (Number(e.amount) || 0),
-      0
-    );
-
+    // 🔥 SEPARATE INCOME AND EXPENSE
+    let totalIncome = 0;
+    let totalExpense = 0;
     const categoryMap = {};
-    expenses.forEach((e) => {
-      const cat = e.category || "Other";
-      categoryMap[cat] = (categoryMap[cat] || 0) + Number(e.amount || 0);
+
+    transactions.forEach((t) => {
+      const amt = Math.abs(Number(t.amount) || 0);
+      const type = (t.type || "").toLowerCase().trim();
+
+      console.log(`   Processing: type="${type}", amount=${amt}`);
+
+      if (type === "income") {
+        totalIncome += amt;
+      } else if (type === "expense") {
+        totalExpense += amt;
+        const cat = t.category || "Other";
+        categoryMap[cat] = (categoryMap[cat] || 0) + amt;
+      }
     });
 
-    const [topCategory, topAmount] =
-      Object.entries(categoryMap).sort((a, b) => b[1] - a[1])[0];
+    // 🔥 DEBUG: Print calculated values
+    console.log("💰 CALCULATED VALUES:");
+    console.log(`   Income: ₹${totalIncome}`);
+    console.log(`   Expense: ₹${totalExpense}`);
+    console.log(`   Savings: ₹${totalIncome - totalExpense}`);
+    console.log("========================================");
 
-    const avg = total / Math.max(1, expenses.length);
+    const savings = totalIncome - totalExpense;
+    const isOverspent = savings < 0;
 
-    const hint = `Is mahine tumne total ₹${total.toFixed(
-      0
-    )} spend kiye, jisme sabse zyada kharcha "${topCategory}" pe gaya (₹${topAmount.toFixed(
-      0
-    )}). Average transaction lagbhag ₹${avg.toFixed(
-      0
-    )} hai. Agar next month iss top category ko thoda control karo, to saving easily badh sakti hai.`;
+    const expenseCount = transactions.filter(
+      (t) => (t.type || "").toLowerCase() === "expense"
+    ).length;
+
+    const categoryEntries = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]);
+    const [topCategory, topAmount] = categoryEntries.length > 0 
+      ? categoryEntries[0] 
+      : ["N/A", 0];
+
+    const avgExpense = expenseCount > 0 ? Math.round(totalExpense / expenseCount) : 0;
+
+    // Generate hint
+    let hint = "";
+
+    if (totalIncome === 0 && totalExpense === 0) {
+      hint = "Abhi tak is mahine koi transaction nahi. Dashboard se add karo! 📝";
+    } else if (totalExpense === 0 && totalIncome > 0) {
+      hint = `Is mahine income ₹${totalIncome.toLocaleString("en-IN")} hai. Koi expense nahi! 💰`;
+    } else if (totalIncome === 0 && totalExpense > 0) {
+      hint = `Is mahine ₹${totalExpense.toLocaleString("en-IN")} spend kiye. Top: "${topCategory}" (₹${topAmount.toLocaleString("en-IN")}). 📊`;
+    } else if (isOverspent) {
+      hint = `⚠️ Income ₹${totalIncome.toLocaleString("en-IN")}, Kharcha ₹${totalExpense.toLocaleString("en-IN")}. ₹${Math.abs(savings).toLocaleString("en-IN")} overspent! 💪`;
+    } else {
+      hint = `🎉 Income ₹${totalIncome.toLocaleString("en-IN")}, Kharcha ₹${totalExpense.toLocaleString("en-IN")}, Savings ₹${savings.toLocaleString("en-IN")}! Top: "${topCategory}" (₹${topAmount.toLocaleString("en-IN")}). 💰`;
+    }
+
+    console.log("📝 Generated Hint:", hint);
 
     return res.json({
       success: true,
@@ -62,7 +106,7 @@ exports.getAiInsight = async (req, res) => {
     console.error("AI insight error:", err);
     return res.status(500).json({
       success: false,
-      message: "Server error while generating insight",
+      message: "Server error",
     });
   }
 };

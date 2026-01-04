@@ -1,6 +1,8 @@
 // frontend/src/services/prediction.js
 
-const API_URL = "http://localhost:5000/api/prediction";
+const API_URL =
+  "https://smart-expense-tracker-0fnu.onrender.com/api/prediction";
+
 
 export async function fetchPrediction(userId) {
   const res = await fetch(API_URL, {

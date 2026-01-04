@@ -1,5 +1,6 @@
 // frontend/src/services/transactions.js
-const API_URL = "http://localhost:5000/api/expenses";
+const API_URL = "https://smart-expense-tracker-0fnu.onrender.com/api/expenses";
+
 
 function getUserId() {
   try {
