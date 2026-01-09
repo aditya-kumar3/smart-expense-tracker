@@ -1,7 +1,5 @@
 // frontend/src/services/ai.js
-const BASE_URL =
-  "http://localhost:5000";
-
+import BASE_URL from "./config";
 
 export async function fetchAiInsights(userId) {
   const res = await fetch(`${BASE_URL}/api/ai/insights`, {
@@ -15,7 +13,6 @@ export async function fetchAiInsights(userId) {
     throw new Error(data.message || "Failed to load AI insight");
   }
 
-  // controller text field return kar raha hai
   return data.text || "";
 }
 
@@ -31,5 +28,5 @@ export async function chatWithAi(userId, question) {
     throw new Error(data.answer || data.message || "AI chat error");
   }
 
-  return data; // { success, answer }
+  return data;
 }
