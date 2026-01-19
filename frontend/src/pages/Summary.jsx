@@ -1,7 +1,6 @@
 // src/pages/Summary.jsx
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Trophy,
@@ -23,433 +22,24 @@ import {
   ArrowDownRight,
   Coins,
   Receipt,
-  Activity,
 } from "lucide-react";
 
-// 🔥 FIXED: Use same API as Dashboard
 import { fetchTransactions } from "../services/transactions";
 import { fetchAiInsights, chatWithAi } from "../services/ai";
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🔢 HELPER FUNCTION - Safe Number
-// ═══════════════════════════════════════════════════════════════════════════════
+const CHART_COLORS = ["#667eea", "#f093fb", "#2af598", "#12c2e9", "#f5af19", "#ff6b9d"];
+
 const safeNumber = (value) => {
   const num = Number(value);
   if (isNaN(num) || !isFinite(num)) return 0;
   return Math.round(Math.abs(num));
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 COLORS
-// ═══════════════════════════════════════════════════════════════════════════════
-const CHART_COLORS = ["#667eea", "#f093fb", "#2af598", "#12c2e9", "#f5af19", "#ff6b9d"];
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🌌 AURORA BACKGROUND
-// ═══════════════════════════════════════════════════════════════════════════════
-const AuroraBackground = () => {
-  return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `
-            radial-gradient(ellipse at 0% 0%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-            radial-gradient(ellipse at 100% 0%, rgba(240, 147, 251, 0.12) 0%, transparent 50%),
-            radial-gradient(ellipse at 100% 100%, rgba(42, 245, 152, 0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 0% 100%, rgba(18, 194, 233, 0.1) 0%, transparent 50%),
-            linear-gradient(180deg, #030014 0%, #0a0520 50%, #050210 100%)
-          `,
-        }}
-      />
-
-      <svg className="absolute inset-0 w-full h-full opacity-30" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="aurora1" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#667eea" stopOpacity="0" />
-            <stop offset="50%" stopColor="#764ba2" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#f093fb" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="aurora2" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#12c2e9" stopOpacity="0" />
-            <stop offset="50%" stopColor="#2af598" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#f5af19" stopOpacity="0" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <motion.path
-          d="M0,100 Q250,50 500,100 T1000,100 T1500,100 T2000,100"
-          fill="none"
-          stroke="url(#aurora1)"
-          strokeWidth="100"
-          filter="url(#glow)"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{
-            pathLength: 1,
-            opacity: [0.3, 0.6, 0.3],
-            d: [
-              "M0,100 Q250,50 500,100 T1000,100 T1500,100 T2000,100",
-              "M0,120 Q250,70 500,120 T1000,80 T1500,120 T2000,80",
-              "M0,100 Q250,50 500,100 T1000,100 T1500,100 T2000,100",
-            ],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          style={{ transform: "translateY(10%)" }}
-        />
-
-        <motion.path
-          d="M0,200 Q300,150 600,200 T1200,200 T1800,200"
-          fill="none"
-          stroke="url(#aurora2)"
-          strokeWidth="80"
-          filter="url(#glow)"
-          animate={{
-            opacity: [0.2, 0.5, 0.2],
-            d: [
-              "M0,200 Q300,150 600,200 T1200,200 T1800,200",
-              "M0,180 Q300,220 600,180 T1200,220 T1800,180",
-              "M0,200 Q300,150 600,200 T1200,200 T1800,200",
-            ],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          style={{ transform: "translateY(20%)" }}
-        />
-      </svg>
-
-      {Array.from({ length: 15 }).map((_, i) => (
-        <motion.div
-          key={`crystal-${i}`}
-          className="absolute"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            width: `${4 + Math.random() * 8}px`,
-            height: `${4 + Math.random() * 8}px`,
-          }}
-          animate={{
-            y: [0, -40 - Math.random() * 40, 0],
-            x: [0, Math.random() * 30 - 15, 0],
-            rotate: [0, 360],
-            opacity: [0.2, 0.8, 0.2],
-            scale: [1, 1.5, 1],
-          }}
-          transition={{
-            duration: 8 + Math.random() * 10,
-            repeat: Infinity,
-            delay: Math.random() * 5,
-            ease: "easeInOut",
-          }}
-        >
-          <div
-            className="w-full h-full rounded-full"
-            style={{
-              background: `radial-gradient(circle, ${
-                ["#667eea", "#f093fb", "#2af598", "#12c2e9", "#f5af19"][Math.floor(Math.random() * 5)]
-              } 0%, transparent 70%)`,
-              boxShadow: `0 0 ${10 + Math.random() * 20}px currentColor`,
-            }}
-          />
-        </motion.div>
-      ))}
-
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)
-          `,
-          backgroundSize: "100px 100px",
-        }}
-      />
-
-      <motion.div
-        className="absolute w-[800px] h-[800px] rounded-full"
-        style={{
-          background: "radial-gradient(circle, rgba(102,126,234,0.1) 0%, transparent 60%)",
-          top: "-400px",
-          left: "-400px",
-          filter: "blur(80px)",
-        }}
-        animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        className="absolute w-[600px] h-[600px] rounded-full"
-        style={{
-          background: "radial-gradient(circle, rgba(240,147,251,0.08) 0%, transparent 60%)",
-          bottom: "-300px",
-          right: "-300px",
-          filter: "blur(100px)",
-        }}
-        animate={{ scale: [1, 1.4, 1], opacity: [0.2, 0.5, 0.2] }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-      />
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 💎 LUXURY GLASS CARD
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryGlassCard = ({ children, className = "", variant = "default", delay = 0, hover3D = true }) => {
-  const cardRef = useRef(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-
-  const variants = {
-    default: { bg: "rgba(255,255,255,0.03)", border: "rgba(255,255,255,0.08)", glow: "rgba(102,126,234,0.15)" },
-    aurora: { bg: "linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(240,147,251,0.05) 100%)", border: "rgba(102,126,234,0.2)", glow: "rgba(102,126,234,0.25)" },
-    gold: { bg: "linear-gradient(135deg, rgba(191,149,63,0.08) 0%, rgba(252,246,186,0.03) 100%)", border: "rgba(191,149,63,0.2)", glow: "rgba(191,149,63,0.2)" },
-    crystal: { bg: "linear-gradient(135deg, rgba(42,245,152,0.05) 0%, rgba(18,194,233,0.05) 100%)", border: "rgba(42,245,152,0.15)", glow: "rgba(42,245,152,0.2)" },
-    pink: { bg: "linear-gradient(135deg, rgba(255,107,157,0.08) 0%, rgba(196,113,237,0.05) 100%)", border: "rgba(255,107,157,0.2)", glow: "rgba(255,107,157,0.2)" },
-  };
-
-  const config = variants[variant];
-
-  const handleMouseMove = (e) => {
-    if (!cardRef.current || !hover3D) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setMousePosition({ x, y });
-  };
-
-  return (
-    <motion.div
-      ref={cardRef}
-      initial={{ opacity: 0, y: 40, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.8, delay, type: "spring", stiffness: 100, damping: 20 }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => { setIsHovered(false); setMousePosition({ x: 0, y: 0 }); }}
-      style={{
-        transform: hover3D ? `perspective(1000px) rotateX(${mousePosition.y * -10}deg) rotateY(${mousePosition.x * 10}deg)` : "none",
-        transformStyle: "preserve-3d",
-      }}
-      className={`relative overflow-hidden rounded-[28px] backdrop-blur-2xl transition-all duration-500 ease-out ${className}`}
-    >
-      <div className="absolute inset-0 rounded-[28px]" style={{ background: config.bg }} />
-      <div
-        className="absolute inset-0 rounded-[28px] transition-opacity duration-500"
-        style={{
-          padding: "1px",
-          background: isHovered ? `linear-gradient(135deg, ${config.border}, rgba(255,255,255,0.2), ${config.border})` : `linear-gradient(135deg, ${config.border}, ${config.border})`,
-          mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-          maskComposite: "xor",
-          WebkitMaskComposite: "xor",
-        }}
-      />
-      <motion.div
-        className="absolute inset-0 rounded-[28px] opacity-0 transition-opacity duration-500"
-        style={{
-          background: `radial-gradient(circle at ${50 + mousePosition.x * 100}% ${50 + mousePosition.y * 100}%, ${config.glow} 0%, transparent 50%)`,
-          opacity: isHovered ? 1 : 0,
-        }}
-      />
-      <div className="absolute top-0 left-[10%] right-[10%] h-[1px] rounded-full" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} />
-      <motion.div
-        className="absolute inset-0 rounded-[28px]"
-        style={{ background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%)" }}
-        animate={isHovered ? { x: ["-100%", "200%"] } : {}}
-        transition={{ duration: 1.5, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute -inset-1 rounded-[32px] transition-opacity duration-500"
-        style={{ background: `radial-gradient(ellipse at center, ${config.glow} 0%, transparent 70%)`, filter: "blur(20px)", opacity: isHovered ? 0.6 : 0, zIndex: -1 }}
-      />
-      <div className="relative z-10" style={{ transform: "translateZ(30px)" }}>{children}</div>
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ✨ GRADIENT TEXT
-// ═══════════════════════════════════════════════════════════════════════════════
-const GradientText = ({ children, variant = "aurora", className = "", animate = false }) => {
-  const gradients = {
-    aurora: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-    gold: "linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #bf953f 100%)",
-    crystal: "linear-gradient(135deg, #12c2e9 0%, #2af598 50%, #f5af19 100%)",
-    pink: "linear-gradient(135deg, #ff6b9d 0%, #c471ed 50%, #667eea 100%)",
-    white: "linear-gradient(135deg, #ffffff 0%, #e0e0e0 50%, #ffffff 100%)",
-  };
-
-  return (
-    <motion.span
-      className={`font-bold ${className}`}
-      style={{ background: gradients[variant], WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
-      animate={animate ? { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] } : {}}
-      transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-    >
-      {children}
-    </motion.span>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 LUXURY BUTTON
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryButton = ({ children, onClick, type = "button", variant = "aurora", disabled = false, loading = false, icon, className = "", fullWidth = false, size = "md" }) => {
-  const variants = {
-    aurora: { bg: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)", shadow: "rgba(102,126,234,0.4)", text: "text-white" },
-    gold: { bg: "linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #bf953f 100%)", shadow: "rgba(191,149,63,0.4)", text: "text-black" },
-    crystal: { bg: "linear-gradient(135deg, #12c2e9 0%, #2af598 100%)", shadow: "rgba(42,245,152,0.4)", text: "text-black" },
-    pink: { bg: "linear-gradient(135deg, #ff6b9d 0%, #c471ed 100%)", shadow: "rgba(255,107,157,0.4)", text: "text-white" },
-    ghost: { bg: "rgba(255,255,255,0.05)", shadow: "rgba(255,255,255,0.1)", text: "text-white" },
-    danger: { bg: "linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)", shadow: "rgba(255,65,108,0.4)", text: "text-white" },
-  };
-  const sizes = { sm: "px-4 py-2.5 text-xs", md: "px-6 py-3.5 text-sm", lg: "px-8 py-4 text-base" };
-  const config = variants[variant];
-
-  return (
-    <motion.button
-      type={type}
-      onClick={onClick}
-      disabled={disabled || loading}
-      whileHover={{ scale: disabled ? 1 : 1.03, y: disabled ? 0 : -3 }}
-      whileTap={{ scale: disabled ? 1 : 0.97 }}
-      className={`relative overflow-hidden ${sizes[size]} rounded-2xl ${config.text} font-semibold flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${fullWidth ? "w-full" : ""} ${variant === "ghost" ? "border border-white/10 hover:border-white/20" : ""} ${className}`}
-      style={{ background: config.bg, boxShadow: `0 10px 40px -10px ${config.shadow}` }}
-    >
-      <motion.div className="absolute inset-0" style={{ background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%)" }} animate={{ x: ["-100%", "200%"] }} transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }} />
-      <div className="absolute top-0 left-[20%] right-[20%] h-[1px]" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)" }} />
-      {loading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-5 h-5 border-2 border-current border-t-transparent rounded-full" /> : <>{icon && <span className="relative z-10">{icon}</span>}<span className="relative z-10">{children}</span></>}
-    </motion.button>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📝 LUXURY INPUT
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryInput = ({ type = "text", placeholder, value, onChange, icon, variant = "default", className = "" }) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const variants = {
-    default: { accent: "#667eea", glow: "rgba(102,126,234,0.3)" },
-    crystal: { accent: "#2af598", glow: "rgba(42,245,152,0.3)" },
-  };
-  const config = variants[variant] || variants.default;
-
-  return (
-    <motion.div className="relative group flex-1" animate={{ scale: isFocused ? 1.01 : 1 }} transition={{ duration: 0.2 }}>
-      {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-300" style={{ color: isFocused ? config.accent : "rgba(255,255,255,0.3)" }}>{icon}</div>}
-      <input
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        className={`w-full px-5 py-4 ${icon ? "pl-12" : ""} rounded-2xl bg-white/[0.03] border border-white/10 text-white placeholder:text-white/25 focus:outline-none transition-all duration-300 text-sm ${className}`}
-        style={{ borderColor: isFocused ? config.accent : "rgba(255,255,255,0.1)", boxShadow: isFocused ? `0 0 30px ${config.glow}` : "none" }}
-      />
-      <motion.div className="absolute bottom-0 left-1/2 h-[2px] rounded-full" style={{ background: `linear-gradient(90deg, transparent, ${config.accent}, transparent)` }} initial={{ width: 0, x: "-50%" }} animate={{ width: isFocused ? "80%" : 0, x: "-50%" }} transition={{ duration: 0.3 }} />
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📊 ANIMATED NUMBER - FIXED
-// ═══════════════════════════════════════════════════════════════════════════════
-const AnimatedNumber = ({ value, prefix = "₹", duration = 2, className = "" }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    const targetValue = safeNumber(value);
-    if (targetValue === 0) { setDisplayValue(0); return; }
-
-    let startTime = null;
-    let animationFrame;
-
-    const animate = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
-      if (progress >= 1) { setDisplayValue(targetValue); return; }
-      const easeOutExpo = 1 - Math.pow(2, -10 * progress);
-      setDisplayValue(Math.round(targetValue * easeOutExpo));
-      animationFrame = requestAnimationFrame(animate);
-    };
-
-    animationFrame = requestAnimationFrame(animate);
-    return () => { if (animationFrame) cancelAnimationFrame(animationFrame); setDisplayValue(targetValue); };
-  }, [value, duration]);
-
-  return <span className={className}>{prefix} {Math.round(displayValue).toLocaleString("en-IN")}</span>;
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 💬 CHAT BUBBLE
-// ═══════════════════════════════════════════════════════════════════════════════
-const ChatBubble = ({ message, isAi }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20, scale: 0.9 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ type: "spring", stiffness: 200, damping: 20 }}
-    className={`flex gap-3 ${isAi ? "justify-start" : "justify-end"}`}
-  >
-    {isAi && <motion.div className="p-2 rounded-xl bg-[#667eea]/20 h-fit" whileHover={{ scale: 1.1, rotate: 10 }}><Bot size={18} className="text-[#667eea]" /></motion.div>}
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm ${isAi ? "bg-white/[0.03] border border-white/10 text-white/90" : "bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white"}`}
-      style={{ boxShadow: isAi ? "0 10px 40px -10px rgba(102,126,234,0.2)" : "0 10px 40px -10px rgba(102,126,234,0.4)" }}
-    >
-      {message}
-    </motion.div>
-    {!isAi && <motion.div className="p-2 rounded-xl bg-[#f093fb]/20 h-fit" whileHover={{ scale: 1.1, rotate: -10 }}><User size={18} className="text-[#f093fb]" /></motion.div>}
-  </motion.div>
-);
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📊 CATEGORY BAR
-// ═══════════════════════════════════════════════════════════════════════════════
-const CategoryBar = ({ label, amount, percentage, color, delay = 0 }) => {
-  const safeAmount = safeNumber(amount);
-  const safePercentage = Math.min(100, Math.max(0, Math.round(percentage)));
-
-  return (
-    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay, type: "spring" }} className="space-y-2">
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-white/80 capitalize">{label}</span>
-        <div className="flex items-center gap-2">
-          <GradientText variant="aurora" className="text-sm">₹{safeAmount.toLocaleString("en-IN")}</GradientText>
-          <span className="text-xs text-white/40 px-2 py-0.5 rounded-full bg-white/5">{safePercentage}%</span>
-        </div>
-      </div>
-      <div className="h-3 rounded-full bg-white/5 overflow-hidden relative">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${safePercentage}%` }}
-          transition={{ duration: 1, delay: delay + 0.2, ease: "easeOut" }}
-          className="h-full rounded-full relative"
-          style={{ background: `linear-gradient(90deg, ${color}, ${color}aa)`, boxShadow: `0 0 20px ${color}50` }}
-        >
-          <motion.div className="absolute inset-0" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)" }} animate={{ x: ["-100%", "200%"] }} transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }} />
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🏆 MAIN SUMMARY COMPONENT - COMPLETELY FIXED
-// ═══════════════════════════════════════════════════════════════════════════════
 export default function Summary() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const chatContainerRef = useRef(null);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // STATE
-  // ─────────────────────────────────────────────────────────────────────────────
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [aiText, setAiText] = useState("");
@@ -460,73 +50,18 @@ export default function Summary() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 🔥 FIXED: Data Loading - Use SAME API as Dashboard
-  // ─────────────────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user?.id) return;
-
-      try {
-        setLoading(true);
-        
-        // 🔥 Use fetchTransactions - SAME AS DASHBOARD
-        const now = new Date();
-        const res = await fetchTransactions({
-          month: now.getMonth() + 1,
-          year: now.getFullYear(),
-        });
-        
-        console.log("📊 API Response:", res);
-        
-        // Handle response structure - same as Dashboard
-        let txList = [];
-        if (Array.isArray(res)) {
-          txList = res;
-        } else if (res?.transactions && Array.isArray(res.transactions)) {
-          txList = res.transactions;
-        } else if (res?.data && Array.isArray(res.data)) {
-          txList = res.data;
-        }
-        
-        console.log("📦 Transactions loaded:", txList.length);
-        setTransactions(txList);
-        
-      } catch (err) {
-        console.error("Load error:", err);
-      } finally {
-        setLoading(false);
-      }
-
-      // AI Insights - separate call
-      try {
-        setAiLoading(true);
-        const ai = await fetchAiInsights(user.id);
-        if (ai) setAiText(ai);
-      } catch (err) {
-        console.error("AI error:", err);
-      } finally {
-        setAiLoading(false);
-      }
-    };
-
-    loadData();
-  }, [user?.id]);
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 🔥 FIXED: Calculate Summary - SAME LOGIC AS DASHBOARD
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  // CALCULATIONS
+  // ══════════════════════════════════════════════════════════════════════════
   const summary = useMemo(() => {
-    if (!transactions || transactions.length === 0) {
-      return null;
-    }
+    if (!transactions || transactions.length === 0) return null;
 
     let totalIncome = 0;
     let totalExpense = 0;
     let expenseCount = 0;
 
     transactions.forEach((t) => {
-      const amt = Math.round(Math.abs(Number(t.amount) || 0));
+      const amt = safeNumber(t.amount);
       const type = (t.type || "").toLowerCase().trim();
 
       if (type === "income") {
@@ -538,26 +73,18 @@ export default function Summary() {
     });
 
     const balance = totalIncome - totalExpense;
-    const savings = Math.max(0, balance);
-    const overspent = balance < 0 ? Math.abs(balance) : 0;
-
-    console.log("📊 Calculated Summary:", { totalIncome, totalExpense, balance, savings, overspent });
 
     return {
       totalIncome,
       totalExpense,
       balance,
-      savings,
-      overspent,
-      thisMonthTotal: totalExpense,
-      thisMonthCount: expenseCount,
+      savings: Math.max(0, balance),
+      overspent: balance < 0 ? Math.abs(balance) : 0,
+      expenseCount,
       transactionCount: transactions.length,
     };
   }, [transactions]);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 🔥 FIXED: Calculate Categories - Only Expenses
-  // ─────────────────────────────────────────────────────────────────────────────
   const categories = useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
 
@@ -568,7 +95,7 @@ export default function Summary() {
       if (type !== "expense") return;
 
       const cat = t.category || "Other";
-      const amt = Math.round(Math.abs(Number(t.amount) || 0));
+      const amt = safeNumber(t.amount);
       categoryMap[cat] = (categoryMap[cat] || 0) + amt;
     });
 
@@ -577,14 +104,76 @@ export default function Summary() {
       .sort((a, b) => b.amount - a.amount);
   }, [transactions]);
 
-  // Top category
   const topCategory = categories.length > 0 ? categories[0] : null;
-
-  // Budget status
   const isOver = summary ? summary.balance < 0 : false;
   const saved = summary ? (isOver ? summary.overspent : summary.savings) : 0;
 
-  const monthLabel = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+  const monthLabel = new Date().toLocaleString("default", {
+    month: "long",
+    year: "numeric",
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // DATA LOADING
+  // ══════════════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoading(true);
+        const now = new Date();
+        const res = await fetchTransactions({
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+        });
+
+        let txList = [];
+        if (Array.isArray(res)) {
+          txList = res;
+        } else if (res?.transactions && Array.isArray(res.transactions)) {
+          txList = res.transactions;
+        } else if (res?.data && Array.isArray(res.data)) {
+          txList = res.data;
+        }
+
+        setTransactions(txList);
+      } catch (err) {
+        console.error("Load error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.id]);
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 🔥 FIXED: Generate AI Insight Locally (No Backend Needed)
+  // ══════════════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!summary) {
+      setAiText("");
+      return;
+    }
+
+    // Generate insight based on actual data
+    let insight = "";
+
+    if (summary.transactionCount === 0) {
+      insight = "No transactions yet this month. Start tracking your expenses to get personalized insights!";
+    } else if (isOver) {
+      insight = `⚠️ You've overspent by ₹${summary.overspent.toLocaleString("en-IN")} this month. Your total expenses (₹${summary.totalExpense.toLocaleString("en-IN")}) exceeded your income (₹${summary.totalIncome.toLocaleString("en-IN")}). Consider reducing spending${topCategory ? ` in ${topCategory.label}` : ""} next month.`;
+    } else if (summary.savings >= summary.totalIncome * 0.3) {
+      insight = `🎉 Excellent! You saved ${Math.round((summary.savings / summary.totalIncome) * 100)}% of your income this month (₹${summary.savings.toLocaleString("en-IN")}). ${topCategory ? `Your highest spending was on ${topCategory.label} (₹${topCategory.amount.toLocaleString("en-IN")}).` : ""} Keep up the great work!`;
+    } else if (summary.savings >= summary.totalIncome * 0.1) {
+      insight = `👍 Good job! You saved ₹${summary.savings.toLocaleString("en-IN")} this month (${Math.round((summary.savings / summary.totalIncome) * 100)}% of income). ${topCategory ? `Most spending went to ${topCategory.label} (₹${topCategory.amount.toLocaleString("en-IN")}).` : ""} Try to save a bit more next month!`;
+    } else {
+      insight = `💡 You spent ₹${summary.totalExpense.toLocaleString("en-IN")} this month and saved ₹${summary.savings.toLocaleString("en-IN")}. ${topCategory ? `Top category: ${topCategory.label} (₹${topCategory.amount.toLocaleString("en-IN")}).` : ""} Consider setting a budget to save more.`;
+    }
+
+    setAiText(insight);
+  }, [summary, topCategory, isOver]);
 
   // Auto scroll chat
   useEffect(() => {
@@ -593,432 +182,1131 @@ export default function Summary() {
     }
   }, [chatMessages]);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 🔥 FIXED: Chat Handler - Uses calculated summary
-  // ─────────────────────────────────────────────────────────────────────────────
-  const handleChatSubmit = async (e) => {
+  // ══════════════════════════════════════════════════════════════════════════
+  // 🔥 FIXED: Chat Handler with Proper English Response
+  // ══════════════════════════════════════════════════════════════════════════
+  const handleChatSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (!chatInput.trim() || !user?.id) return;
 
-    const question = chatInput.trim();
-    setChatMessages((prev) => [...prev, { from: "user", text: question }]);
+    const question = chatInput.trim().toLowerCase();
+    setChatMessages((prev) => [...prev, { from: "user", text: chatInput.trim() }]);
     setChatInput("");
     setChatLoading(true);
 
     try {
-      // Build context with calculated data
-      const context = summary
-        ? `User's current month financial summary:
-           - Total Income: ₹${summary.totalIncome.toLocaleString("en-IN")}
-           - Total Expense: ₹${summary.totalExpense.toLocaleString("en-IN")}
-           - Balance: ₹${summary.balance.toLocaleString("en-IN")}
-           - Savings: ₹${summary.savings.toLocaleString("en-IN")}
-           - Total Transactions: ${summary.transactionCount}
-           - Expense Transactions: ${summary.thisMonthCount}
-           - Top spending category: ${topCategory?.label || "N/A"} (₹${topCategory?.amount?.toLocaleString("en-IN") || 0})
-           - All categories: ${categories.map(c => `${c.label}: ₹${c.amount}`).join(", ")}
-           
-           User's question: ${question}`
-        : `User has no transactions yet. Question: ${question}`;
+      // 🔥 Try to answer common questions locally first
+      let localAnswer = getLocalAnswer(question, summary, categories, topCategory);
 
-      const res = await chatWithAi(user.id, context);
-      setChatMessages((prev) => [...prev, { from: "ai", text: res.answer || res.message || res || "Sorry, couldn't process that." }]);
+      if (localAnswer) {
+        // Use local answer
+        setChatMessages((prev) => [...prev, { from: "ai", text: localAnswer }]);
+      } else {
+        // Fall back to AI API with English prompt
+        const context = `
+IMPORTANT: Reply in English only. Be concise and helpful.
+
+User's Financial Data for ${monthLabel}:
+- Total Income: ₹${summary?.totalIncome?.toLocaleString("en-IN") || 0}
+- Total Expenses: ₹${summary?.totalExpense?.toLocaleString("en-IN") || 0}
+- Current Balance: ₹${summary?.balance?.toLocaleString("en-IN") || 0}
+- Total Savings: ₹${summary?.savings?.toLocaleString("en-IN") || 0}
+- Number of Expense Transactions: ${summary?.expenseCount || 0}
+- Top Spending Category: ${topCategory?.label || "None"} (₹${topCategory?.amount?.toLocaleString("en-IN") || 0})
+- All Categories: ${categories.map(c => `${c.label}: ₹${c.amount.toLocaleString("en-IN")}`).join(", ") || "None"}
+
+User's Question: "${chatInput.trim()}"
+
+Please answer the user's question directly based on the data above. Reply in English.`;
+
+        const res = await chatWithAi(user.id, context);
+        const answer = res?.answer || res?.message || res || "Sorry, I couldn't process that. Please try again.";
+        setChatMessages((prev) => [...prev, { from: "ai", text: answer }]);
+      }
     } catch (err) {
       console.error("Chat error:", err);
-      setChatMessages((prev) => [...prev, { from: "ai", text: "Oops! Server busy. Try again! 😊" }]);
+      // Provide helpful fallback
+      let fallback = "Sorry, I'm having trouble connecting. ";
+      if (summary) {
+        fallback += `Here's a quick summary: You spent ₹${summary.totalExpense.toLocaleString("en-IN")} and saved ₹${summary.savings.toLocaleString("en-IN")} this month.`;
+      }
+      setChatMessages((prev) => [...prev, { from: "ai", text: fallback }]);
     } finally {
       setChatLoading(false);
     }
+  }, [chatInput, user?.id, summary, categories, topCategory, monthLabel]);
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 🔥 LOCAL ANSWER FUNCTION - Handles common questions without API
+  // ══════════════════════════════════════════════════════════════════════════
+  const getLocalAnswer = (question, summary, categories, topCategory) => {
+    if (!summary) {
+      return "You don't have any transactions yet. Add some from the dashboard to get started!";
+    }
+
+    const q = question.toLowerCase();
+
+    // Spending questions
+    if (q.includes("how much") && (q.includes("spent") || q.includes("spend") || q.includes("expense"))) {
+      return `You spent a total of ₹${summary.totalExpense.toLocaleString("en-IN")} this month across ${summary.expenseCount} transactions.${topCategory ? ` Your highest spending was on ${topCategory.label} (₹${topCategory.amount.toLocaleString("en-IN")}).` : ""}`;
+    }
+
+    // Income questions
+    if (q.includes("how much") && (q.includes("earn") || q.includes("income") || q.includes("made"))) {
+      return `Your total income this month is ₹${summary.totalIncome.toLocaleString("en-IN")}.`;
+    }
+
+    // Savings questions
+    if (q.includes("how much") && (q.includes("save") || q.includes("saving") || q.includes("saved"))) {
+      if (summary.balance >= 0) {
+        return `Great news! You saved ₹${summary.savings.toLocaleString("en-IN")} this month (${Math.round((summary.savings / summary.totalIncome) * 100)}% of your income).`;
+      } else {
+        return `Unfortunately, you overspent by ₹${summary.overspent.toLocaleString("en-IN")} this month. Try to reduce expenses next month.`;
+      }
+    }
+
+    // Balance questions
+    if (q.includes("balance") || q.includes("left") || q.includes("remaining")) {
+      if (summary.balance >= 0) {
+        return `Your current balance is ₹${summary.balance.toLocaleString("en-IN")}. You're doing well!`;
+      } else {
+        return `Your balance is -₹${Math.abs(summary.balance).toLocaleString("en-IN")}. You've spent more than you earned this month.`;
+      }
+    }
+
+    // Category questions
+    if (q.includes("category") || q.includes("categories") || q.includes("where") || q.includes("what")) {
+      if (categories.length === 0) {
+        return "You haven't recorded any expenses yet.";
+      }
+      const catList = categories.slice(0, 5).map(c => `${c.label}: ₹${c.amount.toLocaleString("en-IN")}`).join(", ");
+      return `Here are your top spending categories: ${catList}.`;
+    }
+
+    // Top spending
+    if (q.includes("top") || q.includes("highest") || q.includes("most")) {
+      if (topCategory) {
+        return `Your highest spending category is ${topCategory.label} with ₹${topCategory.amount.toLocaleString("en-IN")} spent.`;
+      }
+      return "No expense categories found.";
+    }
+
+    // Summary/overview
+    if (q.includes("summary") || q.includes("overview") || q.includes("tell me")) {
+      return `Here's your ${monthLabel} summary:\n• Income: ₹${summary.totalIncome.toLocaleString("en-IN")}\n• Expenses: ₹${summary.totalExpense.toLocaleString("en-IN")}\n• ${summary.balance >= 0 ? `Savings: ₹${summary.savings.toLocaleString("en-IN")}` : `Overspent: ₹${summary.overspent.toLocaleString("en-IN")}`}\n• Top Category: ${topCategory?.label || "N/A"}`;
+    }
+
+    // Budget/advice
+    if (q.includes("budget") || q.includes("advice") || q.includes("tip") || q.includes("suggest")) {
+      if (summary.balance >= 0) {
+        const savingsPercent = Math.round((summary.savings / summary.totalIncome) * 100);
+        if (savingsPercent >= 30) {
+          return `Excellent! You're saving ${savingsPercent}% of your income. Consider investing some of it for future growth.`;
+        } else if (savingsPercent >= 10) {
+          return `Good job saving ${savingsPercent}%! Try to increase it to 30% by reducing ${topCategory?.label || "optional"} expenses.`;
+        } else {
+          return `You're saving only ${savingsPercent}%. Try setting a budget and tracking daily expenses to save more.`;
+        }
+      } else {
+        return `You're overspending. Consider reducing ${topCategory?.label || "discretionary"} expenses and creating a strict budget.`;
+      }
+    }
+
+    // Default - return null to use AI API
+    return null;
   };
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // 🎨 RENDER
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen relative">
-      <AuroraBackground />
+    <div className="summary-page">
+      <div className="summary-bg">
+        <div className="bg-gradient" />
+        <div className="bg-glow" />
+      </div>
 
-      <div className="relative z-10 min-h-screen px-4 py-6 lg:px-10 lg:py-8">
-        {/* HEADER */}
-        <motion.header
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="flex flex-wrap items-center justify-between gap-4 mb-8"
-        >
-          <div className="flex items-center gap-5">
-            <LuxuryButton variant="ghost" onClick={() => navigate("/dashboard")} icon={<ArrowLeft size={18} />} size="sm">
-              Back
-            </LuxuryButton>
+      <div className="summary-container">
+        {/* Header */}
+        <header className="summary-header fade-in">
+          <div className="header-left">
+            <button className="back-btn" onClick={() => navigate("/dashboard")}>
+              <ArrowLeft size={18} />
+              <span>Back</span>
+            </button>
 
-            <div className="flex items-center gap-4">
-              <motion.div
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                className="relative p-4 rounded-3xl"
-                style={{ background: "linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #bf953f 100%)", boxShadow: "0 20px 60px -15px rgba(191,149,63,0.5)" }}
-              >
-                <BarChart3 size={28} className="text-black" />
-                <motion.div
-                  className="absolute -top-2 -right-2"
-                  animate={{ scale: [1, 1.2, 1], rotate: [0, 10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <div className="p-1.5 rounded-full" style={{ background: "linear-gradient(135deg, #667eea, #f093fb)", boxShadow: "0 0 20px rgba(102,126,234,0.6)" }}>
-                    <Sparkles size={12} className="text-white" />
-                  </div>
-                </motion.div>
-              </motion.div>
-
+            <div className="header-title-section">
+              <div className="header-icon">
+                <BarChart3 size={26} className="text-black" />
+                <div className="header-icon-badge">
+                  <Sparkles size={10} className="text-white" />
+                </div>
+              </div>
               <div>
-                <GradientText variant="gold" className="text-2xl tracking-tight">{monthLabel}</GradientText>
-                <p className="text-sm text-white/40 mt-1">Monthly Summary Report</p>
+                <h1 className="header-title">{monthLabel}</h1>
+                <p className="header-subtitle">Monthly Summary Report</p>
               </div>
             </div>
           </div>
 
-          <motion.span
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="px-4 py-2 rounded-full text-[11px] font-black tracking-wider"
-            style={{ background: "linear-gradient(135deg, #bf953f, #fcf6ba)", color: "#000", boxShadow: "0 5px 20px -5px rgba(191,149,63,0.5)" }}
-          >
-            ✨ AI POWERED
-          </motion.span>
-        </motion.header>
+          <span className="ai-badge pulse">✨ AI POWERED</span>
+        </header>
 
-        {/* TROPHY CARD */}
-        <LuxuryGlassCard variant="gold" className="p-8 mb-8" delay={0.1}>
-          <div className="relative">
-            <motion.div
-              className="absolute -top-4 -right-4 w-32 h-32 rounded-full"
-              style={{ background: "radial-gradient(circle, rgba(191,149,63,0.3) 0%, transparent 70%)", filter: "blur(20px)" }}
-              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-              transition={{ duration: 4, repeat: Infinity }}
-            />
+        {/* Trophy Card */}
+        <div className="trophy-card card-gold fade-in-up">
+          <div className="trophy-glow" />
 
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <motion.div
-                    className="p-3 rounded-2xl"
-                    style={{ background: "rgba(191,149,63,0.2)" }}
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                  >
-                    <Trophy size={28} className="text-[#fcf6ba]" />
-                  </motion.div>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-black/20 text-[#fcf6ba]">
-                    Performance Highlight
+          <div className="trophy-content">
+            <div className="trophy-main">
+              <div className="trophy-header">
+                <div className="trophy-icon">
+                  <Trophy size={26} className="text-amber-200" />
+                </div>
+                <span className="trophy-badge">Performance Highlight</span>
+              </div>
+
+              <h2 className="trophy-title">
+                {isOver ? "Let's Improve Next Month! 💪" : "Amazing Month! 🏆"}
+              </h2>
+
+              {loading ? (
+                <div className="loading-state">
+                  <Loader2 size={20} className="spinner" />
+                  <span>Analyzing your month...</span>
+                </div>
+              ) : summary ? (
+                <p className="trophy-text">
+                  You earned{" "}
+                  <span className="text-emerald-400 font-bold">
+                    ₹{summary.totalIncome.toLocaleString("en-IN")}
+                  </span>{" "}
+                  and spent{" "}
+                  <span className="text-rose-400 font-bold">
+                    ₹{summary.totalExpense.toLocaleString("en-IN")}
+                  </span>{" "}
+                  across <span className="text-white font-bold">{summary.expenseCount} expenses</span>.{" "}
+                  {isOver ? (
+                    <>
+                      You overspent by{" "}
+                      <span className="text-rose-400 font-bold">
+                        ₹{saved.toLocaleString("en-IN")}
+                      </span>
+                      . Let's budget better next month!
+                    </>
+                  ) : (
+                    <>
+                      You saved{" "}
+                      <span className="text-emerald-400 font-bold">
+                        ₹{saved.toLocaleString("en-IN")}
+                      </span>
+                      ! Great financial discipline! 👏
+                    </>
+                  )}
+                </p>
+              ) : (
+                <p className="text-white/60">No transactions found. Add some from dashboard!</p>
+              )}
+            </div>
+
+            {summary && (
+              <div className="trophy-stats">
+                <div className="mini-stat income">
+                  <div className="mini-stat-icon income">
+                    <ArrowUpRight size={18} />
+                  </div>
+                  <span className="mini-stat-label">Income</span>
+                  <span className="mini-stat-value text-emerald-400">
+                    ₹{summary.totalIncome.toLocaleString("en-IN")}
                   </span>
                 </div>
 
-                <motion.h2
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-3xl lg:text-4xl font-black mb-4"
-                >
-                  <GradientText variant="gold">
-                    {isOver ? "We'll Bounce Back! 🧠" : "Golden Month! 🏆"}
-                  </GradientText>
-                </motion.h2>
-
-                {loading ? (
-                  <div className="flex items-center gap-3 text-white/50">
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
-                      <Loader2 size={20} />
-                    </motion.div>
-                    <span>Analyzing your month...</span>
+                <div className={`mini-stat ${isOver ? "expense" : "savings"}`}>
+                  <div className={`mini-stat-icon ${isOver ? "expense" : "savings"}`}>
+                    {isOver ? <ArrowDownRight size={18} /> : <Coins size={18} />}
                   </div>
-                ) : summary ? (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-base lg:text-lg text-white/80 leading-relaxed"
-                  >
-                    You earned{" "}
-                    <GradientText variant="crystal" className="text-xl">
-                      ₹{summary.totalIncome.toLocaleString("en-IN")}
-                    </GradientText>{" "}
-                    and spent{" "}
-                    <GradientText variant="pink" className="text-xl">
-                      ₹{summary.totalExpense.toLocaleString("en-IN")}
-                    </GradientText>{" "}
-                    across <span className="font-bold text-white">{summary.thisMonthCount} expense transactions</span>.{" "}
-                    {isOver ? (
-                      <>
-                        Overspent by <span className="text-[#ff6b9d] font-bold">₹{saved.toLocaleString("en-IN")}</span>.
-                        Let's control spending next month! 💪
-                      </>
-                    ) : (
-                      <>
-                        Saved <GradientText variant="crystal" className="text-xl">₹{saved.toLocaleString("en-IN")}</GradientText> this month. Great job! 👏
-                      </>
-                    )}
-                  </motion.p>
-                ) : (
-                  <p className="text-white/60">No transactions found. Add some from the dashboard!</p>
-                )}
+                  <span className="mini-stat-label">{isOver ? "Overspent" : "Saved"}</span>
+                  <span className={`mini-stat-value ${isOver ? "text-rose-400" : "text-amber-200"}`}>
+                    ₹{saved.toLocaleString("en-IN")}
+                  </span>
+                </div>
               </div>
-
-              {/* Stats Mini Cards */}
-              {summary && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="flex gap-4"
-                >
-                  <div className="p-4 rounded-2xl text-center min-w-[120px]" style={{ background: "rgba(42,245,152,0.1)", border: "1px solid rgba(42,245,152,0.2)" }}>
-                    <div className="p-2 rounded-xl bg-[#2af598]/20 w-fit mx-auto mb-2">
-                      <ArrowUpRight size={20} className="text-[#2af598]" />
-                    </div>
-                    <p className="text-xs text-white/50 mb-1">Income</p>
-                    <GradientText variant="crystal" className="text-xl">
-                      ₹{summary.totalIncome.toLocaleString("en-IN")}
-                    </GradientText>
-                  </div>
-
-                  <div
-                    className="p-4 rounded-2xl text-center min-w-[120px]"
-                    style={{
-                      background: isOver ? "rgba(255,107,157,0.1)" : "rgba(191,149,63,0.1)",
-                      border: `1px solid ${isOver ? "rgba(255,107,157,0.2)" : "rgba(191,149,63,0.2)"}`,
-                    }}
-                  >
-                    <div className={`p-2 rounded-xl w-fit mx-auto mb-2 ${isOver ? "bg-[#ff6b9d]/20" : "bg-[#bf953f]/20"}`}>
-                      {isOver ? <ArrowDownRight size={20} className="text-[#ff6b9d]" /> : <Coins size={20} className="text-[#fcf6ba]" />}
-                    </div>
-                    <p className="text-xs text-white/50 mb-1">{isOver ? "Overspent" : "Saved"}</p>
-                    <GradientText variant={isOver ? "pink" : "gold"} className="text-xl">
-                      ₹{saved.toLocaleString("en-IN")}
-                    </GradientText>
-                  </div>
-                </motion.div>
-              )}
-            </div>
+            )}
           </div>
-        </LuxuryGlassCard>
-
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* CATEGORY BREAKDOWN */}
-          <LuxuryGlassCard variant="aurora" className="p-6" delay={0.2}>
-            <div className="flex items-center gap-3 mb-6">
-              <motion.div className="p-3 rounded-xl bg-[#667eea]/20" whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
-                <PieChart size={22} className="text-[#667eea]" />
-              </motion.div>
-              <div>
-                <p className="text-base font-semibold text-white">Category Breakdown</p>
-                <p className="text-xs text-white/40">Expense distribution by category</p>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="flex items-center justify-center h-48">
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-10 h-10 border-3 border-[#667eea] border-t-transparent rounded-full" />
-              </div>
-            ) : categories.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-white/30">
-                <PieChart size={50} className="mb-3 opacity-30" />
-                <p className="text-sm">No expense categories yet</p>
-                <p className="text-xs text-white/20 mt-1">Add expenses from dashboard</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {categories.map((cat, idx) => {
-                  const totalExpense = summary?.totalExpense || 1;
-                  const share = totalExpense === 0 ? 0 : Math.round((cat.amount / totalExpense) * 100);
-
-                  return (
-                    <CategoryBar
-                      key={cat.label + idx}
-                      label={cat.label}
-                      amount={cat.amount}
-                      percentage={share}
-                      color={CHART_COLORS[idx % CHART_COLORS.length]}
-                      delay={idx * 0.1}
-                    />
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Top Category Highlight */}
-            {topCategory && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="mt-6 p-4 rounded-2xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
-              >
-                <div className="flex items-center gap-2">
-                  <Target size={16} className="text-[#f093fb]" />
-                  <span className="text-xs text-white/50">Top Spending Category</span>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <GradientText variant="pink" className="text-lg capitalize">{topCategory.label}</GradientText>
-                  <span className="text-white/80 font-semibold">₹{topCategory.amount.toLocaleString("en-IN")}</span>
-                </div>
-              </motion.div>
-            )}
-          </LuxuryGlassCard>
-
-          {/* AI INSIGHT & CHAT */}
-          <LuxuryGlassCard variant="crystal" className="p-6" delay={0.3}>
-            <div className="flex items-center gap-3 mb-6">
-              <motion.div className="p-3 rounded-xl bg-[#2af598]/20" animate={{ y: [0, -5, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-                <Brain size={22} className="text-[#2af598]" />
-              </motion.div>
-              <div>
-                <p className="text-base font-semibold text-white">Smart AI Insight</p>
-                <p className="text-xs text-white/40">Personalized analysis</p>
-              </div>
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="ml-auto">
-                <Sparkles size={18} className="text-[#2af598]/50" />
-              </motion.div>
-            </div>
-
-            {/* AI Summary */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="p-4 rounded-2xl mb-6"
-              style={{ background: "rgba(42,245,152,0.05)", border: "1px solid rgba(42,245,152,0.15)" }}
-            >
-              {aiLoading ? (
-                <div className="flex items-center gap-3 text-white/60">
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
-                    <Loader2 size={18} className="text-[#2af598]" />
-                  </motion.div>
-                  <span className="text-sm">Analyzing your spending patterns...</span>
-                </div>
-              ) : aiText ? (
-                <p className="text-sm leading-relaxed text-white/80">{aiText}</p>
-              ) : (
-                <p className="text-sm text-white/50">Add transactions to get AI insights!</p>
-              )}
-            </motion.div>
-
-            {/* Chat Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <MessageCircle size={16} className="text-[#667eea]" />
-                <span className="text-sm font-medium text-white/70">Ask AI Anything</span>
-              </div>
-
-              <div ref={chatContainerRef} className="h-52 overflow-y-auto space-y-3 pr-2 luxury-scrollbar">
-                {chatMessages.map((m, i) => (
-                  <ChatBubble key={i} message={m.text} isAi={m.from === "ai"} />
-                ))}
-                {chatLoading && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-white/50 text-sm pl-12">
-                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.6, repeat: Infinity }}>
-                      <Loader2 size={14} className="animate-spin" />
-                    </motion.div>
-                    <span>Thinking...</span>
-                  </motion.div>
-                )}
-              </div>
-
-              <form onSubmit={handleChatSubmit} className="flex gap-3 items-center">
-                <LuxuryInput
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask about your spending..."
-                  variant="crystal"
-                  icon={<MessageCircle size={16} />}
-                />
-                <LuxuryButton type="submit" variant="crystal" disabled={chatLoading || !chatInput.trim()} loading={chatLoading} icon={<Send size={16} />} size="md">
-                  <span className="hidden sm:inline">Ask</span>
-                </LuxuryButton>
-              </form>
-            </div>
-          </LuxuryGlassCard>
         </div>
 
-        {/* QUICK STATS ROW */}
+        {/* Main Grid */}
+        <div className="main-grid">
+          {/* Category Breakdown */}
+          <div className="card card-aurora fade-in-up">
+            <div className="card-header">
+              <div className="card-icon aurora">
+                <PieChart size={20} />
+              </div>
+              <div>
+                <h3 className="card-title">Category Breakdown</h3>
+                <p className="card-subtitle">Expense distribution</p>
+              </div>
+            </div>
+
+            <div className="card-body">
+              {loading ? (
+                <div className="loading-center">
+                  <Loader2 size={24} className="spinner text-indigo-400" />
+                </div>
+              ) : categories.length === 0 ? (
+                <div className="empty-state">
+                  <PieChart size={40} />
+                  <p>No expense categories yet</p>
+                </div>
+              ) : (
+                <div className="categories-list">
+                  {categories.map((cat, idx) => {
+                    const totalExpense = summary?.totalExpense || 1;
+                    const percent = Math.round((cat.amount / totalExpense) * 100);
+
+                    return (
+                      <div key={cat.label + idx} className="category-item fade-in-up" style={{ animationDelay: `${idx * 0.1}s` }}>
+                        <div className="category-header">
+                          <span className="category-label">{cat.label}</span>
+                          <div className="category-values">
+                            <span className="category-amount">₹{cat.amount.toLocaleString("en-IN")}</span>
+                            <span className="category-percent">{percent}%</span>
+                          </div>
+                        </div>
+                        <div className="category-bar-bg">
+                          <div
+                            className="category-bar"
+                            style={{
+                              width: `${percent}%`,
+                              background: `linear-gradient(90deg, ${CHART_COLORS[idx % CHART_COLORS.length]}, ${CHART_COLORS[idx % CHART_COLORS.length]}aa)`,
+                              boxShadow: `0 0 15px ${CHART_COLORS[idx % CHART_COLORS.length]}50`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {topCategory && (
+                <div className="top-category">
+                  <div className="top-category-header">
+                    <Target size={14} className="text-pink-400" />
+                    <span>Top Spending Category</span>
+                  </div>
+                  <div className="top-category-content">
+                    <span className="top-category-name">{topCategory.label}</span>
+                    <span className="top-category-amount">₹{topCategory.amount.toLocaleString("en-IN")}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* AI Insight & Chat */}
+          <div className="card card-crystal fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <div className="card-header">
+              <div className="card-icon crystal">
+                <Brain size={20} />
+              </div>
+              <div>
+                <h3 className="card-title">Smart AI Insight</h3>
+                <p className="card-subtitle">Personalized analysis</p>
+              </div>
+              <Sparkles size={16} className="ml-auto text-emerald-400/50" />
+            </div>
+
+            <div className="card-body">
+              {/* AI Summary - Now Generated Locally */}
+              <div className="ai-summary">
+                {loading ? (
+                  <div className="ai-loading">
+                    <Loader2 size={16} className="spinner text-emerald-400" />
+                    <span>Analyzing your spending patterns...</span>
+                  </div>
+                ) : aiText ? (
+                  <p className="ai-text">{aiText}</p>
+                ) : (
+                  <p className="ai-empty">Add transactions to get AI insights!</p>
+                )}
+              </div>
+
+              {/* Chat Section */}
+              <div className="chat-section">
+                <div className="chat-header">
+                  <MessageCircle size={14} className="text-indigo-400" />
+                  <span>Ask AI Anything</span>
+                </div>
+
+                <div ref={chatContainerRef} className="chat-messages">
+                  {chatMessages.map((m, i) => (
+                    <div key={i} className={`chat-bubble ${m.from === "ai" ? "ai" : "user"}`}>
+                      {m.from === "ai" && (
+                        <div className="chat-avatar ai">
+                          <Bot size={14} />
+                        </div>
+                      )}
+                      <div className={`chat-text ${m.from === "ai" ? "ai" : "user"}`}>
+                        {m.text}
+                      </div>
+                      {m.from !== "ai" && (
+                        <div className="chat-avatar user">
+                          <User size={14} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {chatLoading && (
+                    <div className="chat-loading">
+                      <Loader2 size={14} className="spinner" />
+                      <span>Thinking...</span>
+                    </div>
+                  )}
+                </div>
+
+                <form onSubmit={handleChatSubmit} className="chat-form">
+                  <div className="chat-input-wrap">
+                    <MessageCircle size={16} className="chat-input-icon" />
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="Ask about your spending..."
+                      className="chat-input"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={chatLoading || !chatInput.trim()}
+                    className="chat-send-btn"
+                  >
+                    {chatLoading ? <Loader2 size={16} className="spinner" /> : <Send size={16} />}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
         {summary && (
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-            {/* Total Income */}
-            <LuxuryGlassCard variant="crystal" className="p-5" delay={0.5} hover3D={false}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-xl bg-[#2af598]/20">
-                  <ArrowUpRight size={18} className="text-[#2af598]" />
-                </div>
-                <span className="text-xs text-white/50 uppercase tracking-wider">Total Income</span>
+          <div className="quick-stats fade-in-up" style={{ animationDelay: "0.2s" }}>
+            <div className="stat-card crystal">
+              <div className="stat-card-icon crystal">
+                <ArrowUpRight size={18} />
               </div>
-              <GradientText variant="crystal" className="text-2xl">
-                <AnimatedNumber value={summary.totalIncome} duration={1.5} />
-              </GradientText>
-            </LuxuryGlassCard>
+              <span className="stat-card-label">Total Income</span>
+              <span className="stat-card-value crystal">
+                ₹{summary.totalIncome.toLocaleString("en-IN")}
+              </span>
+            </div>
 
-            {/* Total Expense */}
-            <LuxuryGlassCard variant="pink" className="p-5" delay={0.6} hover3D={false}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-xl bg-[#ff6b9d]/20">
-                  <Receipt size={18} className="text-[#ff6b9d]" />
-                </div>
-                <span className="text-xs text-white/50 uppercase tracking-wider">Total Expense</span>
+            <div className="stat-card pink">
+              <div className="stat-card-icon pink">
+                <Receipt size={18} />
               </div>
-              <GradientText variant="pink" className="text-2xl">
-                <AnimatedNumber value={summary.totalExpense} duration={1.5} />
-              </GradientText>
-            </LuxuryGlassCard>
+              <span className="stat-card-label">Total Expense</span>
+              <span className="stat-card-value pink">
+                ₹{summary.totalExpense.toLocaleString("en-IN")}
+              </span>
+            </div>
 
-            {/* Status */}
-            <LuxuryGlassCard variant={isOver ? "pink" : "crystal"} className="p-5" delay={0.7} hover3D={false}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`p-2 rounded-xl ${isOver ? "bg-[#ff6b9d]/20" : "bg-[#2af598]/20"}`}>
-                  {isOver ? <AlertCircle size={18} className="text-[#ff6b9d]" /> : <CheckCircle2 size={18} className="text-[#2af598]" />}
-                </div>
-                <span className="text-xs text-white/50 uppercase tracking-wider">Status</span>
+            <div className={`stat-card ${isOver ? "pink" : "crystal"}`}>
+              <div className={`stat-card-icon ${isOver ? "pink" : "crystal"}`}>
+                {isOver ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
               </div>
-              <GradientText variant={isOver ? "pink" : "crystal"} className="text-lg">
+              <span className="stat-card-label">Status</span>
+              <span className={`stat-card-value ${isOver ? "pink" : "crystal"}`}>
                 {isOver ? "Over Budget" : "On Track!"}
-              </GradientText>
-            </LuxuryGlassCard>
+              </span>
+            </div>
 
-            {/* Top Category */}
-            <LuxuryGlassCard variant="gold" className="p-5" delay={0.8} hover3D={false}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-xl bg-[#bf953f]/20">
-                  <TrendingUp size={18} className="text-[#fcf6ba]" />
-                </div>
-                <span className="text-xs text-white/50 uppercase tracking-wider">Top Category</span>
+            <div className="stat-card gold">
+              <div className="stat-card-icon gold">
+                <TrendingUp size={18} />
               </div>
-              <GradientText variant="gold" className="text-lg truncate capitalize">
-                {topCategory?.label || "N/A"}
-              </GradientText>
-            </LuxuryGlassCard>
-          </motion.div>
+              <span className="stat-card-label">Top Category</span>
+              <span className="stat-card-value gold">{topCategory?.label || "N/A"}</span>
+            </div>
+          </div>
         )}
 
-        {/* FOOTER */}
-        <motion.footer initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="mt-14 text-center">
-          <div className="flex items-center justify-center gap-3 text-white/30 text-xs">
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
-              <Gem size={14} className="text-[#667eea]" />
-            </motion.div>
-            <span>Smart Expense</span>
-            <span className="text-[#667eea]">•</span>
-            <span>Summary Report</span>
-            <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1, repeat: Infinity }}>💜</motion.span>
-            <span className="text-[#f093fb]">•</span>
-            <GradientText variant="aurora" className="text-xs">ADITYA EDITION</GradientText>
-          </div>
-        </motion.footer>
+        {/* Footer */}
+        <footer className="summary-footer fade-in">
+          <Gem size={14} className="text-indigo-400" />
+          <span>Smart Expense</span>
+          <span className="footer-dot">•</span>
+          <span>Summary Report</span>
+          <span className="footer-heart">💜</span>
+          <span className="footer-dot pink">•</span>
+          <span className="footer-edition">ADITYA EDITION</span>
+        </footer>
       </div>
 
       <style>{`
-        .luxury-scrollbar::-webkit-scrollbar { width: 6px; }
-        .luxury-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
-        .luxury-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea, #f093fb); border-radius: 10px; }
-        .luxury-scrollbar::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #f093fb, #667eea); }
-        ::selection { background: rgba(102,126,234,0.3); color: white; }
+        .summary-page {
+          min-height: 100vh;
+          position: relative;
+        }
+
+        .summary-container {
+          position: relative;
+          z-index: 10;
+          min-height: 100vh;
+          padding: 1.5rem 1rem;
+          padding-bottom: 2rem;
+        }
+
+        @media (min-width: 768px) {
+          .summary-container { padding: 2rem; }
+        }
+
+        .summary-bg {
+          position: fixed;
+          inset: 0;
+          overflow: hidden;
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .bg-gradient {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(ellipse at 0% 0%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 100% 0%, rgba(240, 147, 251, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at 100% 100%, rgba(42, 245, 152, 0.08) 0%, transparent 50%),
+            linear-gradient(180deg, #030014 0%, #0a0520 50%, #050210 100%);
+        }
+
+        .bg-glow {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse at 30% 20%, rgba(191, 149, 63, 0.05) 0%, transparent 50%);
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.03); }
+        }
+
+        @keyframes barGrow {
+          from { width: 0; }
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+        .pulse { animation: pulse 2s ease-in-out infinite; }
+        .spinner { animation: spin 0.8s linear infinite; }
+
+        .summary-header {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .back-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.5rem 0.875rem;
+          border-radius: 0.625rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: white;
+          font-size: 0.8125rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          transform: translateX(-2px);
+        }
+
+        .header-title-section {
+          display: flex;
+          align-items: center;
+          gap: 0.875rem;
+        }
+
+        .header-icon {
+          position: relative;
+          padding: 0.875rem;
+          border-radius: 1rem;
+          background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #bf953f 100%);
+          box-shadow: 0 10px 30px -10px rgba(191, 149, 63, 0.5);
+        }
+
+        .header-icon-badge {
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          padding: 4px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea, #f093fb);
+          box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .header-title {
+          font-size: 1.25rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #bf953f 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        @media (min-width: 640px) {
+          .header-title { font-size: 1.5rem; }
+        }
+
+        .header-subtitle {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
+          margin-top: 0.125rem;
+        }
+
+        .ai-badge {
+          padding: 0.5rem 1rem;
+          border-radius: 9999px;
+          font-size: 0.6875rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          background: linear-gradient(135deg, #bf953f, #fcf6ba);
+          color: #000;
+          box-shadow: 0 5px 20px -5px rgba(191, 149, 63, 0.5);
+        }
+
+        .trophy-card {
+          position: relative;
+          padding: 1.5rem;
+          border-radius: 1.25rem;
+          background: linear-gradient(135deg, rgba(191, 149, 63, 0.1), rgba(252, 246, 186, 0.03));
+          border: 1px solid rgba(191, 149, 63, 0.15);
+          margin-bottom: 1.5rem;
+          overflow: hidden;
+        }
+
+        @media (min-width: 640px) {
+          .trophy-card { padding: 2rem; }
+        }
+
+        .trophy-glow {
+          position: absolute;
+          top: -50px;
+          right: -50px;
+          width: 200px;
+          height: 200px;
+          background: radial-gradient(circle, rgba(191, 149, 63, 0.2) 0%, transparent 70%);
+          filter: blur(40px);
+        }
+
+        .trophy-content {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        @media (min-width: 1024px) {
+          .trophy-content {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+          }
+        }
+
+        .trophy-main { flex: 1; }
+
+        .trophy-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+        }
+
+        .trophy-icon {
+          padding: 0.75rem;
+          border-radius: 0.875rem;
+          background: rgba(191, 149, 63, 0.2);
+        }
+
+        .trophy-badge {
+          padding: 0.25rem 0.625rem;
+          border-radius: 9999px;
+          font-size: 0.625rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          background: rgba(0, 0, 0, 0.2);
+          color: #fcf6ba;
+        }
+
+        .trophy-title {
+          font-size: 1.5rem;
+          font-weight: 900;
+          margin-bottom: 0.75rem;
+          background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #bf953f 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        @media (min-width: 640px) {
+          .trophy-title { font-size: 2rem; }
+        }
+
+        .trophy-text {
+          font-size: 0.9375rem;
+          color: rgba(255, 255, 255, 0.8);
+          line-height: 1.6;
+        }
+
+        @media (min-width: 640px) {
+          .trophy-text { font-size: 1rem; }
+        }
+
+        .loading-state {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .trophy-stats {
+          display: flex;
+          gap: 1rem;
+        }
+
+        .mini-stat {
+          padding: 1rem;
+          border-radius: 1rem;
+          text-align: center;
+          min-width: 100px;
+        }
+
+        .mini-stat.income {
+          background: rgba(42, 245, 152, 0.1);
+          border: 1px solid rgba(42, 245, 152, 0.2);
+        }
+
+        .mini-stat.expense {
+          background: rgba(255, 107, 157, 0.1);
+          border: 1px solid rgba(255, 107, 157, 0.2);
+        }
+
+        .mini-stat.savings {
+          background: rgba(191, 149, 63, 0.1);
+          border: 1px solid rgba(191, 149, 63, 0.2);
+        }
+
+        .mini-stat-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 0.625rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 0.5rem;
+        }
+
+        .mini-stat-icon.income { background: rgba(42, 245, 152, 0.2); color: #2af598; }
+        .mini-stat-icon.expense { background: rgba(255, 107, 157, 0.2); color: #ff6b9d; }
+        .mini-stat-icon.savings { background: rgba(191, 149, 63, 0.2); color: #fcf6ba; }
+
+        .mini-stat-label {
+          display: block;
+          font-size: 0.625rem;
+          color: rgba(255, 255, 255, 0.5);
+          text-transform: uppercase;
+          margin-bottom: 0.25rem;
+        }
+
+        .mini-stat-value { font-size: 1.125rem; font-weight: 700; }
+
+        .main-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1.25rem;
+        }
+
+        @media (min-width: 1024px) {
+          .main-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .card {
+          padding: 1.25rem;
+          border-radius: 1.125rem;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        @media (min-width: 640px) { .card { padding: 1.5rem; } }
+
+        .card-aurora {
+          background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(240, 147, 251, 0.03));
+          border-color: rgba(102, 126, 234, 0.12);
+        }
+
+        .card-crystal {
+          background: linear-gradient(135deg, rgba(42, 245, 152, 0.06), rgba(18, 194, 233, 0.03));
+          border-color: rgba(42, 245, 152, 0.1);
+        }
+
+        .card-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 1.25rem;
+        }
+
+        .card-icon { padding: 0.625rem; border-radius: 0.625rem; }
+        .card-icon.aurora { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+        .card-icon.crystal { background: rgba(42, 245, 152, 0.2); color: #2af598; }
+
+        .card-title { font-size: 0.9375rem; font-weight: 600; color: white; }
+        .card-subtitle { font-size: 0.6875rem; color: rgba(255, 255, 255, 0.5); }
+
+        .card-body { min-height: 200px; }
+
+        .loading-center {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 200px;
+        }
+
+        .empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 200px;
+          gap: 0.5rem;
+          color: rgba(255, 255, 255, 0.2);
+        }
+
+        .empty-state p { font-size: 0.75rem; }
+
+        .categories-list { display: flex; flex-direction: column; gap: 1rem; }
+
+        .category-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.375rem;
+        }
+
+        .category-label {
+          font-size: 0.8125rem;
+          color: rgba(255, 255, 255, 0.8);
+          text-transform: capitalize;
+        }
+
+        .category-values { display: flex; align-items: center; gap: 0.5rem; }
+
+        .category-amount {
+          font-size: 0.8125rem;
+          font-weight: 600;
+          background: linear-gradient(135deg, #667eea, #f093fb);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .category-percent {
+          font-size: 0.625rem;
+          color: rgba(255, 255, 255, 0.4);
+          padding: 0.125rem 0.375rem;
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .category-bar-bg {
+          height: 8px;
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.05);
+          overflow: hidden;
+        }
+
+        .category-bar {
+          height: 100%;
+          border-radius: 9999px;
+          animation: barGrow 0.8s ease-out forwards;
+        }
+
+        .top-category {
+          margin-top: 1.25rem;
+          padding: 0.875rem;
+          border-radius: 0.875rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .top-category-header {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          font-size: 0.6875rem;
+          color: rgba(255, 255, 255, 0.5);
+          margin-bottom: 0.375rem;
+        }
+
+        .top-category-content {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .top-category-name {
+          font-size: 1rem;
+          font-weight: 600;
+          text-transform: capitalize;
+          background: linear-gradient(135deg, #ff6b9d, #c471ed);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .top-category-amount {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .ai-summary {
+          padding: 1rem;
+          border-radius: 0.875rem;
+          background: rgba(42, 245, 152, 0.05);
+          border: 1px solid rgba(42, 245, 152, 0.12);
+          margin-bottom: 1.25rem;
+        }
+
+        .ai-loading {
+          display: flex;
+          align-items: center;
+          gap: 0.625rem;
+          font-size: 0.8125rem;
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .ai-text {
+          font-size: 0.8125rem;
+          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.85);
+        }
+
+        .ai-empty {
+          font-size: 0.8125rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .chat-header {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          font-size: 0.8125rem;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.7);
+          margin-bottom: 0.75rem;
+        }
+
+        .chat-messages {
+          height: 180px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 0.625rem;
+          padding-right: 0.5rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea, #f093fb); border-radius: 10px; }
+
+        .chat-bubble { display: flex; gap: 0.5rem; align-items: flex-start; }
+        .chat-bubble.user { justify-content: flex-end; }
+
+        .chat-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: 0.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .chat-avatar.ai { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+        .chat-avatar.user { background: rgba(240, 147, 251, 0.2); color: #f093fb; }
+
+        .chat-text {
+          max-width: 75%;
+          padding: 0.625rem 0.875rem;
+          border-radius: 0.875rem;
+          font-size: 0.8125rem;
+          line-height: 1.5;
+          white-space: pre-wrap;
+        }
+
+        .chat-text.ai {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        .chat-text.user {
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          color: white;
+        }
+
+        .chat-loading {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
+          padding-left: 2.25rem;
+        }
+
+        .chat-form { display: flex; gap: 0.625rem; }
+
+        .chat-input-wrap { position: relative; flex: 1; }
+
+        .chat-input-icon {
+          position: absolute;
+          left: 0.875rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-input {
+          width: 100%;
+          padding: 0.75rem 0.875rem 0.75rem 2.5rem;
+          border-radius: 0.75rem;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: white;
+          font-size: 0.8125rem;
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .chat-input::placeholder { color: rgba(255, 255, 255, 0.25); }
+        .chat-input:focus { border-color: #2af598; box-shadow: 0 0 15px rgba(42, 245, 152, 0.15); }
+
+        .chat-send-btn {
+          padding: 0.75rem 1rem;
+          border-radius: 0.75rem;
+          background: linear-gradient(135deg, #12c2e9, #2af598);
+          border: none;
+          color: black;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.15s, opacity 0.15s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .chat-send-btn:hover:not(:disabled) { transform: translateY(-1px); }
+        .chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .quick-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.875rem;
+          margin-top: 1.5rem;
+        }
+
+        @media (min-width: 768px) { .quick-stats { grid-template-columns: repeat(4, 1fr); } }
+
+        .stat-card {
+          padding: 1rem;
+          border-radius: 1rem;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .stat-card.crystal { background: linear-gradient(135deg, rgba(42, 245, 152, 0.08), rgba(18, 194, 233, 0.03)); border-color: rgba(42, 245, 152, 0.12); }
+        .stat-card.pink { background: linear-gradient(135deg, rgba(255, 107, 157, 0.08), rgba(196, 113, 237, 0.03)); border-color: rgba(255, 107, 157, 0.12); }
+        .stat-card.gold { background: linear-gradient(135deg, rgba(191, 149, 63, 0.08), rgba(252, 246, 186, 0.03)); border-color: rgba(191, 149, 63, 0.12); }
+
+        .stat-card-icon { width: 36px; height: 36px; border-radius: 0.625rem; display: flex; align-items: center; justify-content: center; margin-bottom: 0.625rem; }
+        .stat-card-icon.crystal { background: rgba(42, 245, 152, 0.2); color: #2af598; }
+        .stat-card-icon.pink { background: rgba(255, 107, 157, 0.2); color: #ff6b9d; }
+        .stat-card-icon.gold { background: rgba(191, 149, 63, 0.2); color: #fcf6ba; }
+
+        .stat-card-label { display: block; font-size: 0.625rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.25rem; }
+        .stat-card-value { font-size: 1.125rem; font-weight: 700; }
+        .stat-card-value.crystal { color: #2af598; }
+        .stat-card-value.pink { color: #ff6b9d; }
+        .stat-card-value.gold { color: #fcf6ba; }
+
+        .summary-footer {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          margin-top: 3rem;
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.4);
+          flex-wrap: wrap;
+        }
+
+        .footer-dot { color: #667eea; }
+        .footer-dot.pink { color: #f093fb; }
+        .footer-heart { animation: pulse 1s ease-in-out infinite; }
+        .footer-edition {
+          background: linear-gradient(135deg, #667eea, #f093fb);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          font-weight: 700;
+        }
+
+        .text-emerald-400 { color: #2af598; }
+        .text-rose-400 { color: #ff6b9d; }
+        .text-amber-200 { color: #fcf6ba; }
+        .text-indigo-400 { color: #667eea; }
+        .text-pink-400 { color: #f093fb; }
+        .text-white { color: white; }
+        .text-black { color: black; }
+        .ml-auto { margin-left: auto; }
+
+        ::selection { background: rgba(102, 126, 234, 0.3); color: white; }
+
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
       `}</style>
     </div>
   );

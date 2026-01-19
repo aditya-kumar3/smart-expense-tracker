@@ -24,6 +24,9 @@ connectDB();
 app.get("/", (req, res) => {
   res.send("API is running successfully");
 });
+app.get('/ping', (req, res) => {
+  res.status(200).send('Pong! Server is awake 🚀');
+});
 
 // EXISTING ROUTES
 app.use("/api/auth", require("./routes/authRoutes"));

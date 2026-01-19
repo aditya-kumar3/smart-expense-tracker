@@ -1,7 +1,6 @@
 // src/pages/Dashboard.jsx
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
 import {
   Wallet,
   ArrowUpRight,
@@ -15,11 +14,7 @@ import {
   Sparkles,
   Zap,
   Crown,
-  Star,
   ChevronRight,
-  Activity,
-  CreditCard,
-  DollarSign,
   LogOut,
   Eye,
   EyeOff,
@@ -27,27 +22,17 @@ import {
   AlertCircle,
   X,
   Gem,
-  Shield,
-  Clock,
   BarChart3,
   Coins,
   Receipt,
-  Trophy,
-  Rocket,
-  Heart,
-  Gift,
-  Moon,
-  Sun,
-  Fingerprint,
-  Scan,
-  Radio,
-  Waves,
+  Star,
+  Calendar,
+  Info,
 } from "lucide-react";
 
 import AppShell from "../compnents/layout/AppShell";
 import { fetchTransactions, createTransaction } from "../services/transactions";
 import { fetchGoalStatus, saveGoal } from "../services/goals";
-import { fetchAlerts } from "../services/alerts";
 
 import {
   ResponsiveContainer,
@@ -61,1099 +46,25 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  RadialBarChart,
-  RadialBar,
 } from "recharts";
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎨 AURORA LUXURY COLOR SYSTEM
-// ═══════════════════════════════════════════════════════════════════════════════
-const AURORA_COLORS = {
-  aurora: {
-    start: "#667eea",
-    mid: "#764ba2",
-    end: "#f093fb",
-  },
-  ocean: {
-    deep: "#0c1445",
-    mid: "#1a237e",
-    light: "#3949ab",
-  },
-  gold: {
-    dark: "#bf953f",
-    mid: "#fcf6ba",
-    light: "#fff8dc",
-  },
-  crystal: {
-    pink: "#ff6b9d",
-    purple: "#c471ed",
-    blue: "#12c2e9",
-    green: "#2af598",
-    orange: "#f5af19",
-  },
-  glass: {
-    white: "rgba(255, 255, 255, 0.08)",
-    border: "rgba(255, 255, 255, 0.12)",
-    highlight: "rgba(255, 255, 255, 0.25)",
-  },
-};
-
 const CHART_COLORS = ["#667eea", "#f093fb", "#2af598", "#12c2e9", "#f5af19", "#ff6b9d"];
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🌌 AURORA BOREALIS BACKGROUND
-// ═══════════════════════════════════════════════════════════════════════════════
-const AuroraBackground = () => {
-  return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `
-            radial-gradient(ellipse at 0% 0%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-            radial-gradient(ellipse at 100% 0%, rgba(240, 147, 251, 0.12) 0%, transparent 50%),
-            radial-gradient(ellipse at 100% 100%, rgba(42, 245, 152, 0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 0% 100%, rgba(18, 194, 233, 0.1) 0%, transparent 50%),
-            linear-gradient(180deg, #030014 0%, #0a0520 50%, #050210 100%)
-          `,
-        }}
-      />
-
-      <svg className="absolute inset-0 w-full h-full opacity-30" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="aurora1" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#667eea" stopOpacity="0" />
-            <stop offset="50%" stopColor="#764ba2" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#f093fb" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="aurora2" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#12c2e9" stopOpacity="0" />
-            <stop offset="50%" stopColor="#2af598" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#f5af19" stopOpacity="0" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <motion.path
-          d="M0,100 Q250,50 500,100 T1000,100 T1500,100 T2000,100"
-          fill="none"
-          stroke="url(#aurora1)"
-          strokeWidth="100"
-          filter="url(#glow)"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{
-            pathLength: 1,
-            opacity: [0.3, 0.6, 0.3],
-            d: [
-              "M0,100 Q250,50 500,100 T1000,100 T1500,100 T2000,100",
-              "M0,120 Q250,70 500,120 T1000,80 T1500,120 T2000,80",
-              "M0,100 Q250,50 500,100 T1000,100 T1500,100 T2000,100",
-            ],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          style={{ transform: "translateY(10%)" }}
-        />
-
-        <motion.path
-          d="M0,200 Q300,150 600,200 T1200,200 T1800,200"
-          fill="none"
-          stroke="url(#aurora2)"
-          strokeWidth="80"
-          filter="url(#glow)"
-          animate={{
-            opacity: [0.2, 0.5, 0.2],
-            d: [
-              "M0,200 Q300,150 600,200 T1200,200 T1800,200",
-              "M0,180 Q300,220 600,180 T1200,220 T1800,180",
-              "M0,200 Q300,150 600,200 T1200,200 T1800,200",
-            ],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-          style={{ transform: "translateY(20%)" }}
-        />
-      </svg>
-
-      {Array.from({ length: 20 }).map((_, i) => (
-        <motion.div
-          key={`crystal-${i}`}
-          className="absolute"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            width: `${4 + Math.random() * 8}px`,
-            height: `${4 + Math.random() * 8}px`,
-          }}
-          animate={{
-            y: [0, -40 - Math.random() * 40, 0],
-            x: [0, Math.random() * 30 - 15, 0],
-            rotate: [0, 360],
-            opacity: [0.2, 0.8, 0.2],
-            scale: [1, 1.5, 1],
-          }}
-          transition={{
-            duration: 8 + Math.random() * 10,
-            repeat: Infinity,
-            delay: Math.random() * 5,
-            ease: "easeInOut",
-          }}
-        >
-          <div
-            className="w-full h-full rounded-full"
-            style={{
-              background: `radial-gradient(circle, ${
-                ["#667eea", "#f093fb", "#2af598", "#12c2e9", "#f5af19"][Math.floor(Math.random() * 5)]
-              } 0%, transparent 70%)`,
-              boxShadow: `0 0 ${10 + Math.random() * 20}px currentColor`,
-            }}
-          />
-        </motion.div>
-      ))}
-
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)
-          `,
-          backgroundSize: "100px 100px",
-        }}
-      />
-
-      <motion.div
-        className="absolute w-[1000px] h-[1000px] rounded-full"
-        style={{
-          background: "radial-gradient(circle, rgba(102,126,234,0.1) 0%, transparent 60%)",
-          top: "-500px",
-          left: "-500px",
-          filter: "blur(100px)",
-        }}
-        animate={{
-          scale: [1, 1.3, 1],
-          opacity: [0.3, 0.6, 0.3],
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        className="absolute w-[800px] h-[800px] rounded-full"
-        style={{
-          background: "radial-gradient(circle, rgba(240,147,251,0.08) 0%, transparent 60%)",
-          bottom: "-400px",
-          right: "-400px",
-          filter: "blur(120px)",
-        }}
-        animate={{
-          scale: [1, 1.4, 1],
-          opacity: [0.2, 0.5, 0.2],
-        }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-      />
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 💎 LUXURY GLASS CARD WITH 3D EFFECTS
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryGlassCard = ({
-  children,
-  className = "",
-  variant = "default",
-  delay = 0,
-  hover3D = true,
-  glowIntensity = "medium",
-}) => {
-  const cardRef = useRef(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-
-  const variants = {
-    default: {
-      bg: "rgba(255,255,255,0.03)",
-      border: "rgba(255,255,255,0.08)",
-      glow: "rgba(102,126,234,0.15)",
-    },
-    aurora: {
-      bg: "linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(240,147,251,0.05) 100%)",
-      border: "rgba(102,126,234,0.2)",
-      glow: "rgba(102,126,234,0.25)",
-    },
-    gold: {
-      bg: "linear-gradient(135deg, rgba(191,149,63,0.08) 0%, rgba(252,246,186,0.03) 100%)",
-      border: "rgba(191,149,63,0.2)",
-      glow: "rgba(191,149,63,0.2)",
-    },
-    crystal: {
-      bg: "linear-gradient(135deg, rgba(42,245,152,0.05) 0%, rgba(18,194,233,0.05) 100%)",
-      border: "rgba(42,245,152,0.15)",
-      glow: "rgba(42,245,152,0.2)",
-    },
-    pink: {
-      bg: "linear-gradient(135deg, rgba(255,107,157,0.08) 0%, rgba(196,113,237,0.05) 100%)",
-      border: "rgba(255,107,157,0.2)",
-      glow: "rgba(255,107,157,0.2)",
-    },
-  };
-
-  const config = variants[variant];
-
-  const handleMouseMove = (e) => {
-    if (!cardRef.current || !hover3D) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setMousePosition({ x, y });
-  };
-
-  return (
-    <motion.div
-      ref={cardRef}
-      initial={{ opacity: 0, y: 40, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{
-        duration: 0.8,
-        delay,
-        type: "spring",
-        stiffness: 100,
-        damping: 20,
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setMousePosition({ x: 0, y: 0 });
-      }}
-      style={{
-        transform: hover3D
-          ? `perspective(1000px) rotateX(${mousePosition.y * -10}deg) rotateY(${mousePosition.x * 10}deg)`
-          : "none",
-        transformStyle: "preserve-3d",
-      }}
-      className={`
-        relative overflow-hidden rounded-[28px]
-        backdrop-blur-2xl
-        transition-all duration-500 ease-out
-        ${className}
-      `}
-    >
-      <div
-        className="absolute inset-0 rounded-[28px]"
-        style={{
-          background: config.bg,
-        }}
-      />
-
-      <div
-        className="absolute inset-0 rounded-[28px] transition-opacity duration-500"
-        style={{
-          padding: "1px",
-          background: isHovered
-            ? `linear-gradient(135deg, ${config.border}, rgba(255,255,255,0.2), ${config.border})`
-            : `linear-gradient(135deg, ${config.border}, ${config.border})`,
-          mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-          maskComposite: "xor",
-          WebkitMaskComposite: "xor",
-        }}
-      />
-
-      <motion.div
-        className="absolute inset-0 rounded-[28px] opacity-0 transition-opacity duration-500"
-        style={{
-          background: `radial-gradient(circle at ${50 + mousePosition.x * 100}% ${50 + mousePosition.y * 100}%, ${config.glow} 0%, transparent 50%)`,
-          opacity: isHovered ? 1 : 0,
-        }}
-      />
-
-      <div
-        className="absolute top-0 left-[10%] right-[10%] h-[1px] rounded-full"
-        style={{
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
-        }}
-      />
-
-      <motion.div
-        className="absolute inset-0 rounded-[28px]"
-        style={{
-          background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%)",
-        }}
-        animate={isHovered ? { x: ["-100%", "200%"] } : {}}
-        transition={{ duration: 1.5, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        className="absolute -inset-1 rounded-[32px] transition-opacity duration-500"
-        style={{
-          background: `radial-gradient(ellipse at center, ${config.glow} 0%, transparent 70%)`,
-          filter: "blur(20px)",
-          opacity: isHovered ? 0.6 : 0,
-          zIndex: -1,
-        }}
-      />
-
-      <div className="relative z-10" style={{ transform: "translateZ(30px)" }}>
-        {children}
-      </div>
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ✨ LUXURY GRADIENT TEXT
-// ═══════════════════════════════════════════════════════════════════════════════
-const GradientText = ({ children, variant = "aurora", className = "", animate = false }) => {
-  const gradients = {
-    aurora: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-    gold: "linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #bf953f 100%)",
-    crystal: "linear-gradient(135deg, #12c2e9 0%, #2af598 50%, #f5af19 100%)",
-    pink: "linear-gradient(135deg, #ff6b9d 0%, #c471ed 50%, #667eea 100%)",
-    white: "linear-gradient(135deg, #ffffff 0%, #e0e0e0 50%, #ffffff 100%)",
-  };
-
-  return (
-    <motion.span
-      className={`font-bold ${className}`}
-      style={{
-        background: gradients[variant],
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        backgroundClip: "text",
-      }}
-      animate={
-        animate
-          ? {
-              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-            }
-          : {}
-      }
-      transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-    >
-      {children}
-    </motion.span>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 LUXURY BUTTON
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryButton = ({
-  children,
-  onClick,
-  type = "button",
-  variant = "aurora",
-  disabled = false,
-  loading = false,
-  icon,
-  className = "",
-  fullWidth = false,
-  size = "md",
-}) => {
-  const variants = {
-    aurora: {
-      bg: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-      shadow: "rgba(102,126,234,0.4)",
-      text: "text-white",
-    },
-    gold: {
-      bg: "linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #bf953f 100%)",
-      shadow: "rgba(191,149,63,0.4)",
-      text: "text-black",
-    },
-    crystal: {
-      bg: "linear-gradient(135deg, #12c2e9 0%, #2af598 100%)",
-      shadow: "rgba(42,245,152,0.4)",
-      text: "text-black",
-    },
-    pink: {
-      bg: "linear-gradient(135deg, #ff6b9d 0%, #c471ed 100%)",
-      shadow: "rgba(255,107,157,0.4)",
-      text: "text-white",
-    },
-    ghost: {
-      bg: "rgba(255,255,255,0.05)",
-      shadow: "rgba(255,255,255,0.1)",
-      text: "text-white",
-    },
-    danger: {
-      bg: "linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)",
-      shadow: "rgba(255,65,108,0.4)",
-      text: "text-white",
-    },
-  };
-
-  const sizes = {
-    sm: "px-4 py-2.5 text-xs",
-    md: "px-6 py-3.5 text-sm",
-    lg: "px-8 py-4 text-base",
-  };
-
-  const config = variants[variant];
-
-  return (
-    <motion.button
-      type={type}
-      onClick={onClick}
-      disabled={disabled || loading}
-      whileHover={{ scale: disabled ? 1 : 1.03, y: disabled ? 0 : -3 }}
-      whileTap={{ scale: disabled ? 1 : 0.97 }}
-      className={`
-        relative overflow-hidden
-        ${sizes[size]}
-        rounded-2xl
-        ${config.text}
-        font-semibold
-        flex items-center justify-center gap-2
-        transition-all duration-300
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${fullWidth ? "w-full" : ""}
-        ${variant === "ghost" ? "border border-white/10 hover:border-white/20" : ""}
-        ${className}
-      `}
-      style={{
-        background: config.bg,
-        boxShadow: `0 10px 40px -10px ${config.shadow}`,
-      }}
-    >
-      <motion.div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%)",
-        }}
-        animate={{ x: ["-100%", "200%"] }}
-        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-      />
-
-      <div
-        className="absolute top-0 left-[20%] right-[20%] h-[1px]"
-        style={{
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
-        }}
-      />
-
-      {loading ? (
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
-        />
-      ) : (
-        <>
-          {icon && <span className="relative z-10">{icon}</span>}
-          <span className="relative z-10">{children}</span>
-        </>
-      )}
-    </motion.button>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📝 LUXURY INPUT
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryInput = ({
-  type = "text",
-  name,
-  placeholder,
-  value,
-  onChange,
-  required = false,
-  icon,
-  variant = "default",
-  className = "",
-}) => {
-  const [isFocused, setIsFocused] = useState(false);
-
-  const variants = {
-    default: { accent: "#667eea", glow: "rgba(102,126,234,0.3)" },
-    gold: { accent: "#bf953f", glow: "rgba(191,149,63,0.3)" },
-    crystal: { accent: "#2af598", glow: "rgba(42,245,152,0.3)" },
-    pink: { accent: "#ff6b9d", glow: "rgba(255,107,157,0.3)" },
-  };
-
-  const config = variants[variant];
-
-  return (
-    <motion.div
-      className="relative group"
-      animate={{ scale: isFocused ? 1.01 : 1 }}
-      transition={{ duration: 0.2 }}
-    >
-      {icon && (
-        <div
-          className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-300"
-          style={{ color: isFocused ? config.accent : "rgba(255,255,255,0.3)" }}
-        >
-          {icon}
-        </div>
-      )}
-
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required={required}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        className={`
-          w-full px-5 py-4 ${icon ? "pl-12" : ""}
-          rounded-2xl
-          bg-white/[0.03]
-          border border-white/10
-          text-white placeholder:text-white/25
-          focus:outline-none
-          transition-all duration-300
-          text-sm
-          ${className}
-        `}
-        style={{
-          borderColor: isFocused ? config.accent : "rgba(255,255,255,0.1)",
-          boxShadow: isFocused ? `0 0 30px ${config.glow}` : "none",
-        }}
-      />
-
-      <motion.div
-        className="absolute bottom-0 left-1/2 h-[2px] rounded-full"
-        style={{ background: `linear-gradient(90deg, transparent, ${config.accent}, transparent)` }}
-        initial={{ width: 0, x: "-50%" }}
-        animate={{ width: isFocused ? "80%" : 0, x: "-50%" }}
-        transition={{ duration: 0.3 }}
-      />
-
-      <motion.div
-        className="absolute inset-0 rounded-2xl pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at center, ${config.glow} 0%, transparent 70%)`,
-          opacity: isFocused ? 0.3 : 0,
-          filter: "blur(20px)",
-        }}
-        transition={{ duration: 0.3 }}
-      />
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📋 LUXURY SELECT
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxurySelect = ({
-  name,
-  value,
-  onChange,
-  options = [],
-  placeholder,
-  required = false,
-  variant = "default",
-  className = "",
-}) => {
-  const [isFocused, setIsFocused] = useState(false);
-
-  const variants = {
-    default: { accent: "#667eea", glow: "rgba(102,126,234,0.3)" },
-    gold: { accent: "#bf953f", glow: "rgba(191,149,63,0.3)" },
-    crystal: { accent: "#2af598", glow: "rgba(42,245,152,0.3)" },
-    pink: { accent: "#ff6b9d", glow: "rgba(255,107,157,0.3)" },
-  };
-
-  const config = variants[variant];
-
-  return (
-    <motion.div className="relative" animate={{ scale: isFocused ? 1.01 : 1 }}>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        className={`
-          w-full px-5 py-4
-          rounded-2xl
-          bg-white/[0.03]
-          border border-white/10
-          text-white
-          focus:outline-none
-          transition-all duration-300
-          text-sm
-          cursor-pointer
-          appearance-none
-          ${className}
-        `}
-        style={{
-          borderColor: isFocused ? config.accent : "rgba(255,255,255,0.1)",
-          boxShadow: isFocused ? `0 0 30px ${config.glow}` : "none",
-          backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-          backgroundPosition: "right 16px center",
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "20px",
-        }}
-      >
-        {placeholder && (
-          <option value="" className="bg-[#0a0520] text-white/50">
-            {placeholder}
-          </option>
-        )}
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value} className="bg-[#0a0520]">
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📝 LUXURY TEXTAREA
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryTextarea = ({
-  name,
-  placeholder,
-  value,
-  onChange,
-  rows = 3,
-  variant = "default",
-  className = "",
-}) => {
-  const [isFocused, setIsFocused] = useState(false);
-
-  const config = {
-    default: { accent: "#667eea", glow: "rgba(102,126,234,0.3)" },
-  };
-
-  const colorConfig = config[variant] || config.default;
-
-  return (
-    <motion.div className="relative" animate={{ scale: isFocused ? 1.01 : 1 }}>
-      <textarea
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        rows={rows}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        className={`
-          w-full px-5 py-4
-          rounded-2xl
-          bg-white/[0.03]
-          border border-white/10
-          text-white placeholder:text-white/25
-          focus:outline-none
-          transition-all duration-300
-          text-sm
-          resize-none
-          ${className}
-        `}
-        style={{
-          borderColor: isFocused ? colorConfig.accent : "rgba(255,255,255,0.1)",
-          boxShadow: isFocused ? `0 0 30px ${colorConfig.glow}` : "none",
-        }}
-      />
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📊 ANIMATED NUMBER DISPLAY
-// ═══════════════════════════════════════════════════════════════════════════════
-const AnimatedNumber = ({ value, prefix = "₹", duration = 2, className = "" }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    // 🔥 FIX: Handle edge cases
-    if (value === 0 || isNaN(value)) {
-      setDisplayValue(0);
-      return;
-    }
-
-    let startTime;
-    let animationFrame;
-
-    const animate = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
-
-      // 🔥 FIX: When animation completes, set EXACT value
-      if (progress >= 1) {
-        setDisplayValue(Math.round(value)); // Exact final value!
-        return; // Stop animation
-      }
-
-      const easeOutExpo = 1 - Math.pow(2, -10 * progress);
-      setDisplayValue(value * easeOutExpo);
-      animationFrame = requestAnimationFrame(animate);
-    };
-
-    animationFrame = requestAnimationFrame(animate);
-    
-    return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [value, duration]);
-
-  // 🔥 FIX: Always round the display value
-  const finalValue = Math.round(displayValue);
-
-  return (
-    <span className={className}>
-      {prefix} {finalValue.toLocaleString("en-IN")}
-    </span>
-  );
-};
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🎯 LUXURY PROGRESS RING
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryProgressRing = ({ percentage, size = 160, strokeWidth = 12 }) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <motion.div
-        className="absolute inset-[-20px] rounded-full"
-        style={{
-          background: "conic-gradient(from 0deg, rgba(102,126,234,0.3), rgba(240,147,251,0.3), rgba(42,245,152,0.3), rgba(102,126,234,0.3))",
-          filter: "blur(30px)",
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-      />
-
-      <div
-        className="absolute inset-[15px] rounded-full"
-        style={{
-          background: "rgba(255,255,255,0.02)",
-          backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255,255,255,0.05)",
-        }}
-      />
-
-      <svg width={size} height={size} className="transform -rotate-90 relative z-10">
-        <defs>
-          <linearGradient id="luxuryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#667eea" />
-            <stop offset="33%" stopColor="#764ba2" />
-            <stop offset="66%" stopColor="#f093fb" />
-            <stop offset="100%" stopColor="#2af598" />
-          </linearGradient>
-          <filter id="progressGlow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="rgba(255,255,255,0.05)"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="url(#luxuryGradient)"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeLinecap="round"
-          filter="url(#progressGlow)"
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 2, ease: "easeOut", delay: 0.5 }}
-          style={{ strokeDasharray: circumference }}
-        />
-      </svg>
-
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 1, type: "spring", stiffness: 200 }}
-        >
-          <GradientText variant="aurora" className="text-4xl font-black">
-            {percentage}%
-          </GradientText>
-        </motion.div>
-        <span className="text-xs text-white/40 mt-1">Completed</span>
-      </div>
-    </div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🔔 LUXURY TOAST
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryToast = ({ message, type = "success", onClose }) => {
-  const configs = {
-    success: {
-      icon: <CheckCircle2 size={22} />,
-      gradient: "from-emerald-500/20 to-emerald-600/10",
-      accent: "#2af598",
-      iconBg: "rgba(42,245,152,0.2)",
-    },
-    error: {
-      icon: <AlertCircle size={22} />,
-      gradient: "from-red-500/20 to-red-600/10",
-      accent: "#ff416c",
-      iconBg: "rgba(255,65,108,0.2)",
-    },
-    info: {
-      icon: <Bell size={22} />,
-      gradient: "from-blue-500/20 to-blue-600/10",
-      accent: "#667eea",
-      iconBg: "rgba(102,126,234,0.2)",
-    },
-    warning: {
-      icon: <Zap size={22} />,
-      gradient: "from-amber-500/20 to-amber-600/10",
-      accent: "#f5af19",
-      iconBg: "rgba(245,175,25,0.2)",
-    },
-  };
-
-  const config = configs[type];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -50, scale: 0.9, rotateX: -30 }}
-      animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-      exit={{ opacity: 0, y: -30, scale: 0.9 }}
-      className={`
-        flex items-center gap-4 px-6 py-4 rounded-2xl
-        bg-gradient-to-r ${config.gradient}
-        backdrop-blur-2xl
-        border border-white/10
-      `}
-      style={{
-        boxShadow: `0 20px 60px -20px ${config.accent}50`,
-      }}
-    >
-      <motion.div
-        className="p-2 rounded-xl"
-        style={{ backgroundColor: config.iconBg, color: config.accent }}
-        animate={{ rotate: [0, 10, -10, 0] }}
-        transition={{ duration: 0.5 }}
-      >
-        {config.icon}
-      </motion.div>
-      <span className="text-sm font-medium text-white">{message}</span>
-      <motion.button
-        whileHover={{ scale: 1.2, rotate: 90 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={onClose}
-        className="ml-2 p-1.5 rounded-full hover:bg-white/10 transition-colors"
-      >
-        <X size={16} className="text-white/50" />
-      </motion.button>
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 💳 LUXURY STAT CARD
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryStatCard = ({ title, value, icon, trend, trendValue, variant = "aurora", delay = 0 }) => {
-  const variants = {
-    aurora: {
-      gradient: "from-[#667eea]/15 to-[#764ba2]/5",
-      icon: "bg-[#667eea]/20 text-[#667eea]",
-      text: "text-[#667eea]",
-      glow: "rgba(102,126,234,0.3)",
-    },
-    crystal: {
-      gradient: "from-[#2af598]/15 to-[#12c2e9]/5",
-      icon: "bg-[#2af598]/20 text-[#2af598]",
-      text: "text-[#2af598]",
-      glow: "rgba(42,245,152,0.3)",
-    },
-    pink: {
-      gradient: "from-[#ff6b9d]/15 to-[#c471ed]/5",
-      icon: "bg-[#ff6b9d]/20 text-[#ff6b9d]",
-      text: "text-[#ff6b9d]",
-      glow: "rgba(255,107,157,0.3)",
-    },
-    gold: {
-      gradient: "from-[#bf953f]/15 to-[#fcf6ba]/5",
-      icon: "bg-[#bf953f]/20 text-[#bf953f]",
-      text: "text-[#bf953f]",
-      glow: "rgba(191,149,63,0.3)",
-    },
-  };
-
-  const config = variants[variant];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay, duration: 0.6, type: "spring" }}
-      whileHover={{
-        scale: 1.03,
-        y: -5,
-      }}
-      className={`
-        relative overflow-hidden
-        p-6 rounded-[24px]
-        bg-gradient-to-br ${config.gradient}
-        backdrop-blur-xl
-        border border-white/10
-        transition-all duration-500
-        group
-      `}
-    >
-      <motion.div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        style={{
-          background: `radial-gradient(circle at 50% 50%, ${config.glow} 0%, transparent 70%)`,
-        }}
-      />
-
-      <div
-        className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-20 group-hover:opacity-30 transition-opacity"
-        style={{ background: config.glow }}
-      />
-
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-5">
-          <motion.div
-            className={`p-3.5 rounded-2xl ${config.icon}`}
-            whileHover={{ rotate: 360, scale: 1.1 }}
-            transition={{ duration: 0.5 }}
-          >
-            {icon}
-          </motion.div>
-
-          {trend && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: delay + 0.3 }}
-              className={`
-                flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold
-                ${trend === "up" ? "bg-[#2af598]/20 text-[#2af598]" : "bg-[#ff6b9d]/20 text-[#ff6b9d]"}
-              `}
-            >
-              {trend === "up" ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-              {trendValue}
-            </motion.div>
-          )}
-        </div>
-
-        <p className="text-xs text-white/40 uppercase tracking-wider mb-2">{title}</p>
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: delay + 0.2 }}
-        >
-          <GradientText variant={variant === "aurora" ? "aurora" : variant === "crystal" ? "crystal" : variant === "pink" ? "pink" : "gold"} className="text-3xl font-black">
-            <AnimatedNumber value={value} duration={1.5} />
-          </GradientText>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 📈 LUXURY CHART TOOLTIP
-// ═══════════════════════════════════════════════════════════════════════════════
-const LuxuryTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="px-5 py-4 rounded-2xl backdrop-blur-2xl border border-white/10"
-        style={{
-          background: "rgba(10,5,32,0.9)",
-          boxShadow: "0 20px 60px -20px rgba(102,126,234,0.4)",
-        }}
-      >
-        <p className="text-xs text-[#667eea] font-semibold mb-1">{label}</p>
-        <GradientText variant="aurora" className="text-xl font-black">
-          ₹ {Number(payload[0].value).toLocaleString("en-IN")}
-        </GradientText>
-      </motion.div>
-    );
-  }
-  return null;
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 🏠 MAIN DASHBOARD COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════════
-function Dashboard() {
+// ════════════════════════════════════════════════════════════════════════════════
+// MAIN DASHBOARD COMPONENT
+// ════════════════════════════════════════════════════════════════════════════════
+export default function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // State - FIXED: Only store transactions, calculate rest using useMemo
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STATE
+  // ═══════════════════════════════════════════════════════════════════════════
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showBalance, setShowBalance] = useState(true);
-
-  // 🔥 AUTO-CALCULATED SUMMARY - This will NEVER be wrong!
- // 🔥 FIXED: useMemo with Math.round()
-const summary = useMemo(() => {
-  let totalIncome = 0;
-  let totalExpense = 0;
-
-  transactions.forEach((t) => {
-    // 🔥 FIX: Round the amount to avoid floating point issues
-    const amt = Math.round(Math.abs(Number(t.amount) || 0));
-    const type = (t.type || "").toLowerCase().trim();
-
-    if (type === "income") {
-      totalIncome += amt;
-    } else if (type === "expense") {
-      totalExpense += amt;
-    }
-  });
-
-  // 🔥 FIX: Round final values
-  totalIncome = Math.round(totalIncome);
-  totalExpense = Math.round(totalExpense);
-  const balance = Math.round(totalIncome - totalExpense);
-
-  console.log("📊 Summary:", { totalIncome, totalExpense, balance });
-
-  return {
-    transactions,
-    totalIncome,
-    totalExpense,
-    balance,
-  };
-}, [transactions]);
-
-  // Remaining from income (savings)
-  const remainingFromIncome = summary.totalIncome - summary.totalExpense;
+  const [toast, setToast] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     amount: "",
@@ -1164,7 +75,7 @@ const summary = useMemo(() => {
     source: "",
   });
 
-  const [goalStatus, setGoalStatus] = useState(null);
+  const [goal, setGoal] = useState(null);
   const [goalForm, setGoalForm] = useState({
     name: "",
     targetAmount: "",
@@ -1174,42 +85,190 @@ const summary = useMemo(() => {
   const [goalLoading, setGoalLoading] = useState(false);
   const [goalError, setGoalError] = useState("");
 
-  const [alerts, setAlerts] = useState([]);
-  const [toast, setToast] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CALCULATIONS - 100% ACCURATE
+  // ═══════════════════════════════════════════════════════════════════════════
+  const summary = useMemo(() => {
+    let totalIncome = 0;
+    let totalExpense = 0;
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Data Loading - FIXED
-  // ─────────────────────────────────────────────────────────────────────────────
-  const loadSummary = useCallback(async () => {
+    transactions.forEach((t) => {
+      const amount = Math.abs(Number(t.amount) || 0);
+      const type = (t.type || "").toLowerCase().trim();
+
+      if (type === "income") {
+        totalIncome += amount;
+      } else if (type === "expense") {
+        totalExpense += amount;
+      }
+    });
+
+    return {
+      totalIncome: Math.round(totalIncome),
+      totalExpense: Math.round(totalExpense),
+      balance: Math.round(totalIncome - totalExpense),
+    };
+  }, [transactions]);
+
+  // Goal Progress
+  const goalProgress = useMemo(() => {
+    if (!goal) return null;
+
+    const targetAmount = Number(goal.targetAmount) || 0;
+    const monthlyTarget = Number(goal.monthlyTarget) || 0;
+    const savedAmount = Math.max(0, summary.balance);
+
+    const progressPercent =
+      targetAmount > 0
+        ? Math.min(100, Math.round((savedAmount / targetAmount) * 100))
+        : 0;
+
+    const remainingAmount = Math.max(0, targetAmount - savedAmount);
+    const isOnTrack = monthlyTarget > 0 ? savedAmount >= monthlyTarget : true;
+
+    let daysRemaining = null;
+    if (goal.deadline) {
+      const deadlineDate = new Date(goal.deadline);
+      const today = new Date();
+      const diffTime = deadlineDate - today;
+      daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    return {
+      savedAmount,
+      progressPercent,
+      remainingAmount,
+      isOnTrack,
+      daysRemaining,
+      monthlyTarget,
+    };
+  }, [goal, summary.balance]);
+
+  // Category Data for Pie Chart
+  const categoryData = useMemo(() => {
+    const categoryMap = {};
+
+    transactions.forEach((t) => {
+      const type = (t.type || "").toLowerCase().trim();
+      if (type !== "expense") return;
+
+      const category = t.category || "Other";
+      const amount = Math.abs(Number(t.amount) || 0);
+      categoryMap[category] = (categoryMap[category] || 0) + amount;
+    });
+
+    return Object.entries(categoryMap).map(([name, value]) => ({
+      name,
+      value: Math.round(value),
+    }));
+  }, [transactions]);
+
+  // Trend Data for Area Chart
+  const trendData = useMemo(() => {
+    const sortedTx = [...transactions].sort(
+      (a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt)
+    );
+
+    let runningBalance = 0;
+
+    return sortedTx.map((t) => {
+      const amount = Math.abs(Number(t.amount) || 0);
+      const type = (t.type || "").toLowerCase().trim();
+
+      if (type === "income") {
+        runningBalance += amount;
+      } else {
+        runningBalance -= amount;
+      }
+
+      return {
+        date: new Date(t.date || t.createdAt).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+        }),
+        value: Math.round(runningBalance),
+      };
+    });
+  }, [transactions]);
+
+  // Smart Alerts
+  const alerts = useMemo(() => {
+    const alertList = [];
+    const { totalIncome, totalExpense, balance } = summary;
+
+    if (totalExpense > totalIncome && totalIncome > 0) {
+      alertList.push({
+        type: "danger",
+        title: "Overspending Alert!",
+        message: `You've spent ₹${(totalExpense - totalIncome).toLocaleString("en-IN")} more than your income.`,
+      });
+    }
+
+    if (totalIncome > 0 && totalExpense > totalIncome * 0.8 && totalExpense <= totalIncome) {
+      const spentPercent = Math.round((totalExpense / totalIncome) * 100);
+      alertList.push({
+        type: "warning",
+        title: "High Spending Warning",
+        message: `You've used ${spentPercent}% of your income.`,
+      });
+    }
+
+    if (totalIncome > 0 && balance > 0 && balance >= totalIncome * 0.2) {
+      const savedPercent = Math.round((balance / totalIncome) * 100);
+      alertList.push({
+        type: "success",
+        title: "Great Savings! 🎉",
+        message: `You've saved ${savedPercent}% of your income!`,
+      });
+    }
+
+    if (goal && goalProgress && goalProgress.progressPercent >= 100) {
+      alertList.push({
+        type: "success",
+        title: "Goal Achieved! 🏆",
+        message: `You've reached your "${goal.name}" goal!`,
+      });
+    }
+
+    if (goal && goalProgress && goalProgress.progressPercent >= 75 && goalProgress.progressPercent < 100) {
+      alertList.push({
+        type: "info",
+        title: "Almost There!",
+        message: `You're ${goalProgress.progressPercent}% towards "${goal.name}"!`,
+      });
+    }
+
+    if (totalIncome === 0 && totalExpense === 0) {
+      alertList.push({
+        type: "info",
+        title: "Welcome! 👋",
+        message: "Add your first transaction to start tracking.",
+      });
+    }
+
+    return alertList;
+  }, [summary, goal, goalProgress]);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DATA LOADING
+  // ═══════════════════════════════════════════════════════════════════════════
+  const loadTransactions = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
+
       const now = new Date();
-      const data = await fetchTransactions({
+      const response = await fetchTransactions({
         month: now.getMonth() + 1,
         year: now.getFullYear(),
       });
 
-      // 🔥 FIX: Handle both array and object response from API
-      let txList = [];
-      
-      if (Array.isArray(data)) {
-        // API returns array directly
-        txList = data;
-      } else if (data && Array.isArray(data.transactions)) {
-        // API returns { transactions: [], ... }
-        txList = data.transactions;
-      } else if (data && typeof data === 'object') {
-        // Try to find transactions in response
-        txList = data.data || data.items || [];
-      }
+      const txList = Array.isArray(response)
+        ? response
+        : response?.transactions || response?.data || [];
 
-      console.log("📦 Loaded Transactions:", txList.length, txList);
       setTransactions(txList);
-
     } catch (err) {
-      console.error("Summary load error:", err);
       setError(err.message || "Failed to load data");
     } finally {
       setLoading(false);
@@ -1219,15 +278,18 @@ const summary = useMemo(() => {
   const loadGoal = useCallback(async () => {
     try {
       if (!user?.id) return;
-      const res = await fetchGoalStatus(user.id);
-      setGoalStatus(res);
 
-      if (res.goal) {
+      const response = await fetchGoalStatus(user.id);
+
+      if (response?.goal) {
+        setGoal(response.goal);
         setGoalForm({
-          name: res.goal.name || "",
-          targetAmount: res.goal.targetAmount?.toString() || "",
-          monthlyTarget: res.goal.monthlyTarget ? res.goal.monthlyTarget.toString() : "",
-          deadline: res.goal.deadline ? new Date(res.goal.deadline).toISOString().slice(0, 10) : "",
+          name: response.goal.name || "",
+          targetAmount: response.goal.targetAmount?.toString() || "",
+          monthlyTarget: response.goal.monthlyTarget?.toString() || "",
+          deadline: response.goal.deadline
+            ? new Date(response.goal.deadline).toISOString().slice(0, 10)
+            : "",
         });
       }
     } catch (err) {
@@ -1235,64 +297,54 @@ const summary = useMemo(() => {
     }
   }, [user?.id]);
 
-  const loadAlerts = useCallback(async () => {
-    try {
-      if (!user?.id) return;
-      const list = await fetchAlerts(user.id);
-      setAlerts(list || []);
-    } catch (err) {
-      console.error("Alert load error:", err);
-    }
-  }, [user?.id]);
-
   useEffect(() => {
-    loadSummary();
+    loadTransactions();
     loadGoal();
-    loadAlerts();
-  }, [loadSummary, loadGoal, loadAlerts]);
+  }, [loadTransactions, loadGoal]);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Handlers
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS
+  // ═══════════════════════════════════════════════════════════════════════════
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
     navigate("/");
   };
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const showToast = (message, type = "success") => {
+  const showToastMsg = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
 
-  // 🔥 FIXED: handleAdd function
-  const handleAdd = async (e) => {
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddTransaction = async (e) => {
     e.preventDefault();
+
+    if (!form.amount || Number(form.amount) <= 0) {
+      showToastMsg("Please enter a valid amount", "error");
+      return;
+    }
+
     try {
+      setSubmitting(true);
       setError("");
-      setIsSubmitting(true);
 
-      // 🔥 Always send positive amount, type determines income/expense
       const payload = {
-      userId: user.id,
-      amount: Math.round(Math.abs(Number(form.amount))), // Integer only!
-      type: form.type.toLowerCase().trim(),
-      category: form.category,
-      paymentMethod: form.paymentMethod,
-      note: form.note,
-      source: form.type === "income" ? form.source : undefined,
-    };
-
-      console.log("📤 Sending:", payload);
-
+        userId: user.id,
+        amount: Math.round(Math.abs(Number(form.amount))),
+        type: form.type.toLowerCase().trim(),
+        category: form.category || (form.type === "income" ? "Salary" : "Other"),
+        paymentMethod: form.paymentMethod || "cash",
+        note: form.note || "",
+        source: form.type === "income" ? (form.source || "salary") : undefined,
+      };
 
       await createTransaction(payload);
 
-      // Reset form
       setForm({
         amount: "",
         type: "expense",
@@ -1302,109 +354,60 @@ const summary = useMemo(() => {
         source: "",
       });
 
-      // Reload data
-      await loadSummary();
-      await loadAlerts();
+      await loadTransactions();
 
-      showToast(form.type === "income" ? "💰 Income added!" : "💸 Expense recorded!", "success");
+      showToastMsg(
+        form.type === "income"
+          ? `💰 Income of ₹${payload.amount.toLocaleString("en-IN")} added!`
+          : `💸 Expense of ₹${payload.amount.toLocaleString("en-IN")} recorded!`,
+        "success"
+      );
     } catch (err) {
-      console.error("Add transaction error:", err);
       setError(err.message || "Failed to add transaction");
-      showToast("Failed to add transaction", "error");
+      showToastMsg("Failed to add transaction", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleGoalChange = (e) => {
-    setGoalForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleGoalFormChange = (e) => {
+    const { name, value } = e.target;
+    setGoalForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGoalSubmit = async (e) => {
+  const handleSaveGoal = async (e) => {
     e.preventDefault();
-    if (!user?.id) return;
+
+    if (!goalForm.name?.trim() || !goalForm.targetAmount) {
+      setGoalError("Please enter goal name and target amount");
+      return;
+    }
 
     try {
-      setGoalError("");
       setGoalLoading(true);
+      setGoalError("");
 
       const payload = {
         userId: user.id,
-        name: goalForm.name,
-        targetAmount: Number(goalForm.targetAmount),
-        monthlyTarget: goalForm.monthlyTarget ? Number(goalForm.monthlyTarget) : undefined,
+        name: goalForm.name.trim(),
+        targetAmount: Math.round(Number(goalForm.targetAmount)),
+        monthlyTarget: goalForm.monthlyTarget
+          ? Math.round(Number(goalForm.monthlyTarget))
+          : undefined,
         deadline: goalForm.deadline || undefined,
       };
 
       await saveGoal(payload);
       await loadGoal();
-      showToast("🎯 Goal saved!", "success");
+
+      showToastMsg("🎯 Goal saved successfully!", "success");
     } catch (err) {
-      console.error("Goal save error:", err);
       setGoalError(err.message || "Failed to save goal");
-      showToast("Failed to save goal", "error");
+      showToastMsg("Failed to save goal", "error");
     } finally {
       setGoalLoading(false);
     }
   };
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Computed - FIXED
-  // ─────────────────────────────────────────────────────────────────────────────
-  const goal = goalStatus?.goal || null;
-  const progress = goalStatus?.progress || null;
-  const progressPercent = progress?.progressPercent ?? 0;
-
-  const monthLabel = new Date().toLocaleString("default", { month: "long", year: "numeric" });
-
-  // 🔥 FIXED: Category data for pie chart - ONLY expenses
-  const categoryData = useMemo(() => {
-    const map = {};
-
-    (summary.transactions || []).forEach((t) => {
-      // Only count expenses for category breakdown
-      const type = (t.type || "").toLowerCase().trim();
-      if (type !== "expense") return;
-
-      const cat = t.category || "Other";
-      const amt = Math.abs(Number(t.amount) || 0);
-
-      map[cat] = (map[cat] || 0) + amt;
-    });
-
-    return Object.entries(map).map(([name, value]) => ({
-      name,
-      value,
-    }));
-  }, [summary.transactions]);
-
-  // 🔥 FIXED: Timeline data for area chart
-  const timelineData = useMemo(() => {
-    const txs = [...(summary.transactions || [])].sort(
-      (a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt)
-    );
-
-    let running = 0;
-
-    return txs.map((t) => {
-      const amt = Math.abs(Number(t.amount) || 0);
-      const type = (t.type || "").toLowerCase().trim();
-
-      if (type === "income") {
-        running += amt;
-      } else if (type === "expense") {
-        running -= amt;
-      }
-
-      return {
-        date: new Date(t.date || t.createdAt).toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-        }),
-        value: running,
-      };
-    });
-  }, [summary.transactions]);
 
   // Options
   const categoryOptions = [
@@ -1412,10 +415,11 @@ const summary = useMemo(() => {
     { value: "transport", label: "🚗 Transport" },
     { value: "shopping", label: "🛍️ Shopping" },
     { value: "entertainment", label: "🎬 Entertainment" },
-    { value: "bills", label: "📄 Bills" },
+    { value: "bills", label: "📄 Bills & Utilities" },
     { value: "health", label: "🏥 Health" },
     { value: "education", label: "📚 Education" },
     { value: "travel", label: "✈️ Travel" },
+    { value: "groceries", label: "🛒 Groceries" },
     { value: "other", label: "📦 Other" },
   ];
 
@@ -1424,666 +428,1214 @@ const summary = useMemo(() => {
     { value: "cash", label: "💵 Cash" },
     { value: "card", label: "💳 Card" },
     { value: "netbanking", label: "🏦 Net Banking" },
+    { value: "wallet", label: "👛 Wallet" },
   ];
 
-  const sourceOptions = [
+  const incomeSourceOptions = [
     { value: "salary", label: "💼 Salary" },
     { value: "freelance", label: "💻 Freelance" },
+    { value: "business", label: "🏪 Business" },
+    { value: "investment", label: "📈 Investment" },
+    { value: "rental", label: "🏠 Rental" },
     { value: "other", label: "📦 Other" },
   ];
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // 🎨 RENDER
-  // ═══════════════════════════════════════════════════════════════════════════════
+  const currentMonth = new Date().toLocaleString("default", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const getAlertIcon = (type) => {
+    switch (type) {
+      case "danger": return <AlertCircle size={18} />;
+      case "warning": return <Bell size={18} />;
+      case "success": return <Sparkles size={18} />;
+      default: return <Info size={18} />;
+    }
+  };
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="chart-tooltip">
+        <p className="chart-tooltip-label">{label}</p>
+        <p className="chart-tooltip-value">
+          ₹ {Number(payload[0].value).toLocaleString("en-IN")}
+        </p>
+      </div>
+    );
+  };
+    // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════════════════
   return (
     <AppShell>
-      <AuroraBackground />
+      {/* Background */}
+      <div className="dashboard-bg">
+        <div className="bg-gradient" />
+        <div className="bg-glow" />
+      </div>
 
       {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <div className="fixed top-6 right-6 z-50">
-            <LuxuryToast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      {toast && (
+        <div className="toast-container">
+          <div className={`toast toast-${toast.type}`}>
+            <span className="toast-icon">
+              {toast.type === "success" && <CheckCircle2 size={18} />}
+              {toast.type === "error" && <AlertCircle size={18} />}
+              {toast.type === "info" && <Info size={18} />}
+              {toast.type === "warning" && <Bell size={18} />}
+            </span>
+            <span className="toast-message">{toast.message}</span>
+            <button className="toast-close" onClick={() => setToast(null)}>
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="dashboard">
+        {/* Alerts */}
+        {alerts.length > 0 && (
+          <div className="alerts-section">
+            {alerts.slice(0, 2).map((alert, index) => (
+              <div key={index} className={`alert-card alert-${alert.type}`}>
+                <div className={`alert-icon alert-icon-${alert.type}`}>
+                  {getAlertIcon(alert.type)}
+                </div>
+                <div className="alert-content">
+                  <h4 className="alert-title">{alert.title}</h4>
+                  <p className="alert-message">{alert.message}</p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-      </AnimatePresence>
 
-      <div className="relative z-10 min-h-screen px-4 py-6 lg:px-10 lg:py-8">
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        {/* ALERTS */}
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        <AnimatePresence>
-          {alerts?.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mb-6"
-            >
-              <LuxuryGlassCard variant="gold" className="p-4" hover3D={false}>
-                <div className="flex items-center gap-3">
-                  <motion.div
-                    animate={{ rotate: [0, 15, -15, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="p-2 rounded-xl bg-[#bf953f]/20"
-                  >
-                    <Bell size={20} className="text-[#bf953f]" />
-                  </motion.div>
-                  <p className="text-sm text-white/80">{alerts[0]}</p>
-                </div>
-              </LuxuryGlassCard>
-            </motion.div>
+        {/* Header */}
+        <header className="dashboard-header">
+          <div className="header-left">
+            <div className="header-logo">
+              <Wallet size={26} className="text-white" />
+              <div className="header-crown">
+                <Crown size={12} className="text-black" />
+              </div>
+            </div>
+            <div className="header-info">
+              <h1 className="header-title">
+                <span className="title-gradient">SMART EXPENSE</span>
+                <span className="header-badge">PRO</span>
+              </h1>
+              <p className="header-subtitle">{currentMonth} • Dashboard</p>
+            </div>
+          </div>
+
+          <div className="header-right">
+            <div className="header-welcome">
+              <span className="welcome-text">
+                Welcome, {user.name?.split(" ")[0] || "User"} 👋
+              </span>
+            </div>
+            <button className="header-btn btn-ghost" onClick={() => navigate("/summary")}>
+              <BarChart3 size={18} />
+              <span className="btn-text">Reports</span>
+            </button>
+            <button className="header-btn btn-danger" onClick={handleLogout}>
+              <LogOut size={18} />
+            </button>
+          </div>
+        </header>
+
+        {/* Balance Card */}
+        <div className="balance-card">
+          <div className="balance-header">
+            <div className="balance-left">
+              <div className="balance-icon">
+                <Gem size={22} className="text-indigo-400" />
+              </div>
+              <div className="balance-info">
+                <span className="balance-label">Total Balance</span>
+                <span className="balance-live">
+                  <span className="live-dot"></span>
+                  LIVE
+                </span>
+              </div>
+            </div>
+            <button className="balance-toggle" onClick={() => setShowBalance(!showBalance)}>
+              {showBalance ? <Eye size={20} /> : <EyeOff size={20} />}
+            </button>
+          </div>
+
+          <div className="balance-amount">
+            {showBalance ? (
+              <span className={`amount-value ${summary.balance >= 0 ? "positive" : "negative"}`}>
+                {summary.balance < 0 && "- "}₹ {Math.abs(summary.balance).toLocaleString("en-IN")}
+              </span>
+            ) : (
+              <span className="amount-hidden">₹ ••••••</span>
+            )}
+          </div>
+
+          <div className="balance-stats">
+            <div className="stat-box stat-income">
+              <div className="stat-icon-box income">
+                <ArrowUpRight size={16} />
+              </div>
+              <div className="stat-info">
+                <span className="stat-label">Income</span>
+                <span className="stat-value text-emerald-400">
+                  {showBalance ? `₹ ${summary.totalIncome.toLocaleString("en-IN")}` : "₹ ••••"}
+                </span>
+              </div>
+            </div>
+
+            <div className="stat-box stat-expense">
+              <div className="stat-icon-box expense">
+                <ArrowDownRight size={16} />
+              </div>
+              <div className="stat-info">
+                <span className="stat-label">Expense</span>
+                <span className="stat-value text-rose-400">
+                  {showBalance ? `₹ ${summary.totalExpense.toLocaleString("en-IN")}` : "₹ ••••"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {summary.totalIncome > 0 && (
+            <div className="balance-footer">
+              {summary.balance >= 0 ? (
+                <>
+                  <Sparkles size={16} className="text-emerald-400" />
+                  <span>
+                    You've saved <strong className="text-emerald-400">
+                      {Math.round((summary.balance / summary.totalIncome) * 100)}%
+                    </strong> of your income
+                  </span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle size={16} className="text-rose-400" />
+                  <span>
+                    Overspent by <strong className="text-rose-400">
+                      ₹{Math.abs(summary.balance).toLocaleString("en-IN")}
+                    </strong>
+                  </span>
+                </>
+              )}
+            </div>
           )}
-        </AnimatePresence>
+        </div>
 
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        {/* HEADER */}
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        <motion.header
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="flex flex-wrap items-center justify-between gap-4 mb-10"
-        >
-          <div className="flex items-center gap-5">
-            <motion.div
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              className="relative p-4 rounded-3xl"
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-                boxShadow: "0 20px 60px -15px rgba(102,126,234,0.5)",
-              }}
-            >
-              <Wallet size={32} className="text-white" />
-              <motion.div
-                className="absolute -top-2 -right-2"
-                animate={{ scale: [1, 1.2, 1], rotate: [0, 10, 0] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <div
-                  className="p-1.5 rounded-full"
-                  style={{
-                    background: "linear-gradient(135deg, #bf953f, #fcf6ba)",
-                    boxShadow: "0 0 20px rgba(191,149,63,0.6)",
-                  }}
-                >
-                  <Crown size={14} className="text-black" />
-                </div>
-              </motion.div>
-            </motion.div>
-
-            <div>
-              <div className="flex items-center gap-3">
-                <GradientText variant="aurora" className="text-2xl tracking-tight">
-                  SMART EXPENSE
-                </GradientText>
-                <motion.span
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="px-3 py-1 rounded-full text-[10px] font-black tracking-wider"
-                  style={{
-                    background: "linear-gradient(135deg, #bf953f, #fcf6ba)",
-                    color: "#000",
-                    boxShadow: "0 5px 20px -5px rgba(191,149,63,0.5)",
-                  }}
-                >
-                  LUXURY
-                </motion.span>
-              </div>
-              <p className="text-sm text-white/40 mt-1">{monthLabel} · Premium Dashboard</p>
+        {/* Quick Stats */}
+        <div className="quick-stats">
+          <div className="quick-stat-card stat-crystal">
+            <div className="qs-icon crystal">
+              <TrendingUp size={20} />
+            </div>
+            <div className="qs-info">
+              <span className="qs-label">Total Income</span>
+              <span className="qs-value crystal">₹ {summary.totalIncome.toLocaleString("en-IN")}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-right hidden md:block">
-              <p className="text-xl font-semibold text-white">
-                Welcome, {user.name || "User"}
-                <motion.span
-                  animate={{ rotate: [0, 20, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
-                  className="inline-block ml-2"
-                >
-                  ✨
-                </motion.span>
-              </p>
-              <p className="text-xs text-white/40">Premium Member</p>
-            </motion.div>
-
-            <LuxuryButton
-              variant="ghost"
-              onClick={() => navigate("/summary")}
-              icon={<BarChart3 size={18} />}
-              size="sm"
-            >
-              <span className="hidden sm:inline">Summary</span>
-            </LuxuryButton>
-
-            <LuxuryButton variant="danger" onClick={handleLogout} icon={<LogOut size={18} />} size="sm">
-              <span className="hidden sm:inline">Logout</span>
-            </LuxuryButton>
-          </div>
-        </motion.header>
-
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        {/* MAIN BALANCE */}
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <LuxuryGlassCard variant="aurora" className="lg:col-span-2 p-8" delay={0.1}>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <motion.div
-                    className="p-4 rounded-2xl"
-                    style={{ background: "rgba(102,126,234,0.15)" }}
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <Gem size={28} className="text-[#667eea]" />
-                  </motion.div>
-                  <div>
-                    <p className="text-sm text-white/50 uppercase tracking-widest">Total Balance</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <motion.span
-                        animate={{ opacity: [1, 0.5, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold"
-                        style={{ background: "rgba(42,245,152,0.15)", color: "#2af598" }}
-                      >
-                        <Radio size={10} />
-                        LIVE
-                      </motion.span>
-                    </div>
-                  </div>
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowBalance(!showBalance)}
-                  className="p-3 rounded-2xl transition-colors"
-                  style={{ background: "rgba(255,255,255,0.05)" }}
-                >
-                  {showBalance ? (
-                    <Eye size={22} className="text-[#667eea]" />
-                  ) : (
-                    <EyeOff size={22} className="text-white/30" />
-                  )}
-                </motion.button>
-              </div>
-
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                <div className="mb-8">
-                  <motion.div
-                    className="text-6xl font-black mb-3"
-                    style={{
-                      background: summary.balance >= 0
-                        ? "linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 60%, #2af598 100%)"
-                        : "linear-gradient(135deg, #ff416c, #ff4b2b)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      filter: "drop-shadow(0 0 30px rgba(102,126,234,0.3))",
-                    }}
-                  >
-                    {showBalance ? <AnimatedNumber value={summary.balance} duration={2} /> : "₹ ••••••"}
-                  </motion.div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-5 mb-5">
-                  <motion.div
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    className="p-5 rounded-2xl border"
-                    style={{
-                      background: "linear-gradient(135deg, rgba(42,245,152,0.08), rgba(18,194,233,0.03))",
-                      borderColor: "rgba(42,245,152,0.2)",
-                    }}
-                  >
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-2 rounded-xl bg-[#2af598]/20">
-                        <ArrowUpRight size={18} className="text-[#2af598]" />
-                      </div>
-                      <span className="text-xs text-white/50 uppercase tracking-wider">Income</span>
-                    </div>
-                    <GradientText variant="crystal" className="text-2xl font-bold">
-                      {showBalance ? <AnimatedNumber value={summary.totalIncome} /> : "₹ ••••"}
-                    </GradientText>
-                  </motion.div>
-
-                  <motion.div
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    className="p-5 rounded-2xl border"
-                    style={{
-                      background: "linear-gradient(135deg, rgba(255,107,157,0.08), rgba(196,113,237,0.03))",
-                      borderColor: "rgba(255,107,157,0.2)",
-                    }}
-                  >
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-2 rounded-xl bg-[#ff6b9d]/20">
-                        <ArrowDownRight size={18} className="text-[#ff6b9d]" />
-                      </div>
-                      <span className="text-xs text-white/50 uppercase tracking-wider">Expense</span>
-                    </div>
-                    <GradientText variant="pink" className="text-2xl font-bold">
-                      {showBalance ? <AnimatedNumber value={summary.totalExpense} /> : "₹ ••••"}
-                    </GradientText>
-                  </motion.div>
-                </div>
-
-                <motion.div
-                  whileHover={{ scale: 1.01 }}
-                  className="p-4 rounded-2xl"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
-                >
-                  <p className="text-sm text-white/60 flex items-center gap-2">
-                    {remainingFromIncome >= 0 ? (
-                      <>
-                        <Sparkles size={16} className="text-[#2af598]" />
-                        Savings:{" "}
-                        <GradientText variant="crystal" className="text-base" animate={false}>
-                          ₹ {remainingFromIncome.toLocaleString("en-IN")}
-                        </GradientText>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle size={16} className="text-[#ff6b9d]" />
-                        Overspent:{" "}
-                        <span className="text-[#ff6b9d] font-bold">
-                          ₹ {Math.abs(remainingFromIncome).toLocaleString("en-IN")}
-                        </span>
-                      </>
-                    )}
-                  </p>
-                </motion.div>
-              </motion.div>
+          <div className="quick-stat-card stat-pink">
+            <div className="qs-icon pink">
+              <ArrowDownRight size={20} />
             </div>
-          </LuxuryGlassCard>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-5">
-            <LuxuryStatCard
-              title="Total Income"
-              value={summary.totalIncome}
-              icon={<TrendingUp size={24} />}
-              trend="up"
-              trendValue="+12%"
-              variant="crystal"
-              delay={0.2}
-            />
-            <LuxuryStatCard
-              title="Total Expense"
-              value={summary.totalExpense}
-              icon={<ArrowDownRight size={24} />}
-              trend="down"
-              trendValue="-5%"
-              variant="pink"
-              delay={0.3}
-            />
+            <div className="qs-info">
+              <span className="qs-label">Total Expense</span>
+              <span className="qs-value pink">₹ {summary.totalExpense.toLocaleString("en-IN")}</span>
+            </div>
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        {/* CHARTS & CONTENT */}
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 space-y-6">
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <LuxuryGlassCard variant="aurora" className="p-6" delay={0.2}>
-                <div className="flex items-center gap-3 mb-5">
-                  <motion.div
-                    className="p-3 rounded-xl bg-[#667eea]/20"
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <PieChartIcon size={22} className="text-[#667eea]" />
-                  </motion.div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">Category Split</p>
-                    <p className="text-xs text-white/40">Where money goes</p>
+        {/* Main Content Grid */}
+        <div className="content-grid">
+          {/* Left Column */}
+          <div className="content-left">
+            {/* Charts Row */}
+            <div className="charts-row">
+              {/* Pie Chart */}
+              <div className="chart-card card-aurora">
+                <div className="chart-header">
+                  <div className="chart-icon aurora">
+                    <PieChartIcon size={18} />
+                  </div>
+                  <div className="chart-info">
+                    <h3 className="chart-title">Expense Categories</h3>
+                    <p className="chart-subtitle">{categoryData.length} categories</p>
                   </div>
                 </div>
-
-                <div style={{ height: 280 }}>
+                <div className="chart-body">
                   {categoryData.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-white/20">
-                      <PieChartIcon size={60} className="mb-4 opacity-30" />
-                      <p className="text-sm">No expense data yet</p>
+                    <div className="chart-empty">
+                      <PieChartIcon size={40} className="text-white/20" />
+                      <p>No expense data yet</p>
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
                         <Pie
                           data={categoryData}
                           dataKey="value"
                           nameKey="name"
-                          innerRadius={60}
-                          outerRadius={100}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={70}
                           paddingAngle={3}
-                          animationDuration={1500}
                         >
-                          {categoryData.map((_, i) => (
-                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="transparent" />
+                          {categoryData.map((_, index) => (
+                            <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} stroke="transparent" />
                           ))}
                         </Pie>
-                        <Tooltip content={<LuxuryTooltip />} />
-                        <Legend
-                          wrapperStyle={{ fontSize: "11px", paddingTop: "15px" }}
-                          formatter={(v) => <span className="text-white/60">{v}</span>}
-                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: "11px" }} formatter={(value) => <span className="text-white/60">{value}</span>} />
                       </PieChart>
                     </ResponsiveContainer>
                   )}
                 </div>
-              </LuxuryGlassCard>
+              </div>
 
-              <LuxuryGlassCard variant="crystal" className="p-6" delay={0.3}>
-                <div className="flex items-center gap-3 mb-5">
-                  <motion.div
-                    className="p-3 rounded-xl bg-[#2af598]/20"
-                    animate={{ y: [0, -3, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <TrendingUp size={22} className="text-[#2af598]" />
-                  </motion.div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">Net Flow</p>
-                    <p className="text-xs text-white/40">Daily trend</p>
+              {/* Area Chart */}
+              <div className="chart-card card-crystal">
+                <div className="chart-header">
+                  <div className="chart-icon crystal">
+                    <TrendingUp size={18} />
+                  </div>
+                  <div className="chart-info">
+                    <h3 className="chart-title">Balance Trend</h3>
+                    <p className="chart-subtitle">This month</p>
                   </div>
                 </div>
-
-                <div style={{ height: 280 }}>
-                  {timelineData.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-white/20">
-                      <LineChartIcon size={60} className="mb-4 opacity-30" />
-                      <p className="text-sm">No data yet</p>
+                <div className="chart-body">
+                  {trendData.length === 0 ? (
+                    <div className="chart-empty">
+                      <LineChartIcon size={40} className="text-white/20" />
+                      <p>No data yet</p>
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={timelineData}>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <AreaChart data={trendData}>
                         <defs>
-                          <linearGradient id="auroraFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#667eea" stopOpacity={0.6} />
-                            <stop offset="50%" stopColor="#764ba2" stopOpacity={0.3} />
-                            <stop offset="100%" stopColor="#f093fb" stopOpacity={0} />
+                          <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#667eea" stopOpacity={0.4} />
+                            <stop offset="100%" stopColor="#667eea" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                        <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
-                        <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} tickFormatter={(v) => `₹${v}`} tickLine={false} axisLine={false} />
-                        <Tooltip content={<LuxuryTooltip />} />
-                        <Area
-                          type="monotone"
-                          dataKey="value"
-                          stroke="url(#auroraFill)"
-                          strokeWidth={3}
-                          fill="url(#auroraFill)"
-                          dot={{ r: 4, fill: "#667eea", stroke: "#fff", strokeWidth: 2 }}
-                          activeDot={{ r: 7, fill: "#f093fb", stroke: "#fff", strokeWidth: 2 }}
-                        />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="date" stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} />
+                        <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} tickLine={false} tickFormatter={(v) => `₹${v}`} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Area type="monotone" dataKey="value" stroke="#667eea" strokeWidth={2} fill="url(#balanceGradient)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   )}
                 </div>
-              </LuxuryGlassCard>
+              </div>
             </div>
 
             {/* Transactions */}
-            <LuxuryGlassCard variant="pink" className="p-6" delay={0.4}>
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <motion.div className="p-3 rounded-xl bg-[#ff6b9d]/20" whileHover={{ scale: 1.1 }}>
-                    <Receipt size={22} className="text-[#ff6b9d]" />
-                  </motion.div>
+            <div className="transactions-card card-pink">
+              <div className="transactions-header">
+                <div className="transactions-info">
+                  <div className="transactions-icon">
+                    <Receipt size={18} />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">Recent Transactions</p>
-                    <p className="text-xs text-white/40">{summary.transactions.length} entries</p>
+                    <h3 className="transactions-title">Recent Transactions</h3>
+                    <p className="transactions-count">{transactions.length} total entries</p>
                   </div>
                 </div>
-                <motion.button whileHover={{ x: 5 }} className="flex items-center gap-1 text-xs text-[#ff6b9d] font-semibold">
-                  View All <ChevronRight size={14} />
-                </motion.button>
+                <button className="view-all-btn" onClick={() => navigate("/summary")}>
+                  View All <ChevronRight size={16} />
+                </button>
               </div>
 
-              {loading ? (
-                <div className="flex items-center justify-center h-48">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-10 h-10 border-3 border-[#ff6b9d] border-t-transparent rounded-full"
-                  />
-                </div>
-              ) : summary.transactions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 text-white/20">
-                  <Receipt size={60} className="mb-4 opacity-30" />
-                  <p className="text-sm">No transactions yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-80 overflow-y-auto pr-2 luxury-scrollbar">
-                  {summary.transactions.slice(0, 8).map((t, i) => {
-                    const type = (t.type || "").toLowerCase().trim();
-                    const isIncome = type === "income";
-                    const amount = Math.abs(Number(t.amount) || 0);
-                    
-                    return (
-                      <motion.div
-                        key={t._id || i}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        whileHover={{ scale: 1.01, x: 5 }}
-                        className="flex items-center justify-between p-4 rounded-2xl transition-all duration-300"
-                        style={{
-                          background: "rgba(255,255,255,0.02)",
-                          border: "1px solid rgba(255,255,255,0.05)",
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2.5 rounded-xl ${
-                              isIncome ? "bg-[#2af598]/20 text-[#2af598]" : "bg-[#ff6b9d]/20 text-[#ff6b9d]"
-                            }`}
-                          >
-                            {isIncome ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
+              <div className="transactions-body">
+                {loading ? (
+                  <div className="transactions-loading">
+                    <div className="spinner"></div>
+                    <p>Loading...</p>
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="transactions-empty">
+                    <Receipt size={48} className="text-white/20" />
+                    <p>No transactions yet</p>
+                  </div>
+                ) : (
+                  <div className="transactions-list">
+                    {transactions.slice(0, 6).map((tx, index) => {
+                      const isIncome = (tx.type || "").toLowerCase().trim() === "income";
+                      const amount = Math.abs(Number(tx.amount) || 0);
+
+                      return (
+                        <div key={tx._id || index} className="transaction-item">
+                          <div className="tx-left">
+                            <div className={`tx-icon ${isIncome ? "income" : "expense"}`}>
+                              {isIncome ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                            </div>
+                            <div className="tx-details">
+                              <span className="tx-category">{tx.category || "General"}</span>
+                              <span className="tx-meta">
+                                {tx.paymentMethod || "Cash"} • {new Date(tx.date || tx.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                              </span>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold text-white">{t.category || "General"}</p>
-                            <p className="text-xs text-white/40">
-                              {t.paymentMethod || "N/A"} • {new Date(t.date || t.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
+                          <span className={`tx-amount ${isIncome ? "income" : "expense"}`}>
+                            {isIncome ? "+" : "-"}₹{amount.toLocaleString("en-IN")}
+                          </span>
                         </div>
-                        <GradientText variant={isIncome ? "crystal" : "pink"} className="text-lg font-bold">
-                          {isIncome ? "+" : "-"} ₹{amount.toLocaleString("en-IN")}
-                        </GradientText>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </LuxuryGlassCard>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Right Column */}
-          <div className="space-y-6">
-            {/* Goal */}
-            <LuxuryGlassCard variant="gold" className="p-6" delay={0.3}>
-              <div className="flex items-center gap-3 mb-6">
-                <motion.div
-                  className="p-3 rounded-xl bg-[#bf953f]/20"
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <Target size={22} className="text-[#bf953f]" />
-                </motion.div>
-                <div>
-                  <p className="text-sm font-semibold text-white">Savings Goal</p>
-                  <p className="text-xs text-white/40">Track progress</p>
+          <div className="content-right">
+            {/* Goal Card */}
+            <div className="goal-card card-gold">
+              <div className="goal-header">
+                <div className="goal-icon">
+                  <Target size={18} />
+                </div>
+                <div className="goal-info">
+                  <h3 className="goal-title">Savings Goal</h3>
+                  <p className="goal-subtitle">{goal ? "Track your progress" : "Set a savings target"}</p>
                 </div>
               </div>
 
-              {goal ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center mb-6">
-                  <div className="flex justify-center mb-5">
-                    <LuxuryProgressRing percentage={progressPercent} />
+              {goal && goalProgress ? (
+                <div className="goal-progress-section">
+                  {/* Progress Ring */}
+                  <div className="progress-ring-container">
+                    <svg className="progress-ring" viewBox="0 0 120 120">
+                      <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#667eea" />
+                          <stop offset="50%" stopColor="#f093fb" />
+                          <stop offset="100%" stopColor="#2af598" />
+                        </linearGradient>
+                      </defs>
+                      <circle className="progress-bg" cx="60" cy="60" r="50" strokeWidth="10" />
+                      <circle
+                        className="progress-bar"
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        strokeWidth="10"
+                        stroke="url(#progressGradient)"
+                        strokeDasharray={`${2 * Math.PI * 50}`}
+                        strokeDashoffset={`${2 * Math.PI * 50 * (1 - goalProgress.progressPercent / 100)}`}
+                      />
+                    </svg>
+                    <div className="progress-text">
+                      <span className="progress-percent">{goalProgress.progressPercent}%</span>
+                      <span className="progress-label">Complete</span>
+                    </div>
                   </div>
-                  <GradientText variant="gold" className="text-xl mb-3">
-                    🎯 {goal.name}
-                  </GradientText>
-                  <div className="space-y-2 text-xs text-white/50">
-                    <p>
-                      Target: <span className="text-[#fcf6ba] font-semibold">₹{goal.targetAmount?.toLocaleString("en-IN")}</span>
-                    </p>
-                    {progress && (
-                      <>
-                        <p>
-                          Saved: <span className="text-[#2af598] font-semibold">₹{progress.savedThisMonth?.toLocaleString("en-IN")}</span>
-                        </p>
-                        <p>
-                          Total: <span className="text-[#667eea] font-semibold">₹{progress.totalSaved?.toLocaleString("en-IN")}</span>
-                        </p>
-                      </>
+
+                  <h4 className="goal-name">🎯 {goal.name}</h4>
+
+                  <div className="goal-stats">
+                    <div className="goal-stat">
+                      <span className="gs-label">Target</span>
+                      <span className="gs-value gold">₹{goal.targetAmount?.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="goal-stat">
+                      <span className="gs-label">Saved</span>
+                      <span className="gs-value green">₹{goalProgress.savedAmount?.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="goal-stat">
+                      <span className="gs-label">Remaining</span>
+                      <span className="gs-value pink">₹{goalProgress.remainingAmount?.toLocaleString("en-IN")}</span>
+                    </div>
+                    {goalProgress.daysRemaining !== null && (
+                      <div className="goal-stat">
+                        <span className="gs-label">Days Left</span>
+                        <span className="gs-value blue">{goalProgress.daysRemaining}</span>
+                      </div>
                     )}
                   </div>
-                </motion.div>
+
+                  {goal.monthlyTarget > 0 && (
+                    <div className={`track-badge ${goalProgress.isOnTrack ? "on-track" : "off-track"}`}>
+                      {goalProgress.isOnTrack ? (
+                        <><CheckCircle2 size={14} /> On track this month!</>
+                      ) : (
+                        <><AlertCircle size={14} /> Need ₹{Math.max(0, goalProgress.monthlyTarget - goalProgress.savedAmount).toLocaleString("en-IN")} more</>
+                      )}
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-white/20">
-                  <Target size={50} className="mb-3 opacity-30" />
-                  <p className="text-sm">No goal set</p>
+                <div className="goal-empty">
+                  <Target size={40} className="text-white/20" />
+                  <p>No goal set yet</p>
+                  <p className="text-xs text-white/30">Create one below</p>
                 </div>
               )}
 
-              <form onSubmit={handleGoalSubmit} className="space-y-3">
-                <LuxuryInput
-                  name="name"
-                  placeholder="Goal name"
-                  value={goalForm.name}
-                  onChange={handleGoalChange}
-                  required
-                  icon={<Star size={16} />}
-                  variant="gold"
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <LuxuryInput
-                    type="number"
-                    name="targetAmount"
-                    placeholder="Target (₹)"
-                    value={goalForm.targetAmount}
-                    onChange={handleGoalChange}
+              {/* Goal Form */}
+              <form onSubmit={handleSaveGoal} className="goal-form">
+                <div className="input-with-icon">
+                  <Star size={16} className="input-icon" />
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Goal name (e.g., New Phone)"
+                    value={goalForm.name}
+                    onChange={handleGoalFormChange}
+                    className="form-input"
                     required
-                    variant="gold"
-                  />
-                  <LuxuryInput
-                    type="number"
-                    name="monthlyTarget"
-                    placeholder="Monthly (₹)"
-                    value={goalForm.monthlyTarget}
-                    onChange={handleGoalChange}
-                    variant="gold"
                   />
                 </div>
-                <LuxuryInput type="date" name="deadline" value={goalForm.deadline} onChange={handleGoalChange} variant="gold" />
-                <LuxuryButton type="submit" variant="gold" fullWidth loading={goalLoading} icon={<Target size={16} />}>
-                  Save Goal
-                </LuxuryButton>
-                {goalError && <p className="text-xs text-[#ff6b9d] text-center">{goalError}</p>}
-              </form>
-            </LuxuryGlassCard>
 
-            {/* Quick Entry */}
-            <LuxuryGlassCard variant="aurora" className="p-6" delay={0.4}>
-              <div className="flex items-center gap-3 mb-6">
-                <motion.div
-                  className="p-3 rounded-xl bg-[#667eea]/20"
-                  whileHover={{ rotate: 180 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <PlusCircle size={22} className="text-[#667eea]" />
-                </motion.div>
-                <div>
-                  <p className="text-sm font-semibold text-white">Quick Entry</p>
-                  <p className="text-xs text-white/40">Add transaction</p>
+                <div className="form-row">
+                  <input
+                    type="number"
+                    name="targetAmount"
+                    placeholder="Target ₹"
+                    value={goalForm.targetAmount}
+                    onChange={handleGoalFormChange}
+                    className="form-input"
+                    required
+                  />
+                  <input
+                    type="number"
+                    name="monthlyTarget"
+                    placeholder="Monthly ₹"
+                    value={goalForm.monthlyTarget}
+                    onChange={handleGoalFormChange}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="input-with-icon">
+                  <Calendar size={16} className="input-icon" />
+                  <input
+                    type="date"
+                    name="deadline"
+                    value={goalForm.deadline}
+                    onChange={handleGoalFormChange}
+                    className="form-input"
+                  />
+                </div>
+
+                <button type="submit" className="btn btn-gold btn-full" disabled={goalLoading}>
+                  {goalLoading ? <span className="btn-spinner"></span> : <><Target size={16} /> <span>{goal ? "Update Goal" : "Set Goal"}</span></>}
+                </button>
+
+                {goalError && <p className="form-error">{goalError}</p>}
+              </form>
+            </div>
+
+            {/* Quick Add Card */}
+            <div className="add-card card-aurora">
+              <div className="add-header">
+                <div className="add-icon">
+                  <PlusCircle size={18} />
+                </div>
+                <div className="add-info">
+                  <h3 className="add-title">Quick Add</h3>
+                  <p className="add-subtitle">New transaction</p>
                 </div>
               </div>
 
-              <form onSubmit={handleAdd} className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <LuxuryInput
-                    type="number"
-                    name="amount"
-                    placeholder="Amount (₹)"
-                    value={form.amount}
-                    onChange={handleChange}
-                    required
-                    icon={<Coins size={16} />}
-                  />
-                  <LuxurySelect
-                    name="type"
-                    value={form.type}
-                    onChange={handleChange}
-                    options={[
-                      { value: "expense", label: "💸 Expense" },
-                      { value: "income", label: "💰 Income" },
-                    ]}
-                  />
+              <form onSubmit={handleAddTransaction} className="add-form">
+                <div className="form-row">
+                  <div className="input-with-icon">
+                    <Coins size={16} className="input-icon" />
+                    <input
+                      type="number"
+                      name="amount"
+                      placeholder="Amount ₹"
+                      value={form.amount}
+                      onChange={handleFormChange}
+                      className="form-input"
+                      required
+                    />
+                  </div>
+                  <select name="type" value={form.type} onChange={handleFormChange} className="form-select">
+                    <option value="expense">💸 Expense</option>
+                    <option value="income">💰 Income</option>
+                  </select>
                 </div>
 
-                <AnimatePresence>
-                  {form.type === "income" && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                      <LuxurySelect
-                        name="source"
-                        value={form.source}
-                        onChange={handleChange}
-                        placeholder="Income source"
-                        options={sourceOptions}
-                        required
-                        variant="crystal"
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {form.type === "income" && (
+                  <select name="source" value={form.source} onChange={handleFormChange} className="form-select" required>
+                    <option value="">Select source</option>
+                    {incomeSourceOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                )}
 
-                <LuxurySelect name="category" value={form.category} onChange={handleChange} placeholder="Category" options={categoryOptions} required variant="pink" />
-                <LuxurySelect name="paymentMethod" value={form.paymentMethod} onChange={handleChange} placeholder="Payment method" options={paymentOptions} />
-                <LuxuryTextarea name="note" placeholder="Note (optional)" value={form.note} onChange={handleChange} rows={2} />
-                <LuxuryButton type="submit" variant="aurora" fullWidth loading={isSubmitting} icon={<Zap size={18} />}>
-                  Add Transaction
-                </LuxuryButton>
-                {error && <p className="text-xs text-[#ff6b9d] text-center">{error}</p>}
+                <select name="category" value={form.category} onChange={handleFormChange} className="form-select" required>
+                  <option value="">Select category</option>
+                  {(form.type === "income" ? incomeSourceOptions : categoryOptions).map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+
+                <select name="paymentMethod" value={form.paymentMethod} onChange={handleFormChange} className="form-select">
+                  <option value="">Payment method</option>
+                  {paymentOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+
+                <textarea
+                  name="note"
+                  placeholder="Note (optional)"
+                  value={form.note}
+                  onChange={handleFormChange}
+                  className="form-textarea"
+                  rows={2}
+                />
+
+                <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
+                  {submitting ? <span className="btn-spinner"></span> : <><Zap size={16} /> <span>{form.type === "income" ? "Add Income" : "Add Expense"}</span></>}
+                </button>
+
+                {error && <p className="form-error">{error}</p>}
               </form>
-            </LuxuryGlassCard>
+            </div>
           </div>
         </div>
 
         {/* Footer */}
-        <motion.footer initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="mt-14 text-center">
-          <div className="flex items-center justify-center gap-3 text-white/30 text-xs">
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
-              <Gem size={14} className="text-[#667eea]" />
-            </motion.div>
-            <span>Smart Expense</span>
-            <span className="text-[#667eea]">•</span>
-            <span>Made with</span>
-            <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1, repeat: Infinity }}>
-              💜
-            </motion.span>
-            <span className="text-[#f093fb]">•</span>
-            <GradientText variant="aurora" className="text-xs">
-              ADITYA EDITION
-            </GradientText>
-          </div>
-        </motion.footer>
+        <footer className="dashboard-footer">
+          <Gem size={14} className="text-indigo-400" />
+          <span>Smart Expense</span>
+          <span className="footer-dot">•</span>
+          <span>Made with 💜</span>
+          <span className="footer-dot">•</span>
+          <span className="footer-edition">ADITYA EDITION</span>
+        </footer>
       </div>
-
-      {/* Styles */}
+            {/* ═══════════════════════════════════════════════════════════════════════════ */}
+      {/* STYLES */}
+      {/* ═══════════════════════════════════════════════════════════════════════════ */}
       <style>{`
-        .luxury-scrollbar::-webkit-scrollbar { width: 6px; }
-        .luxury-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
-        .luxury-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea, #f093fb); border-radius: 10px; }
-        .luxury-scrollbar::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #f093fb, #667eea); }
+        /* BASE */
+        .dashboard {
+          position: relative;
+          z-index: 10;
+          min-height: 100vh;
+          padding: 1rem;
+          padding-bottom: 2rem;
+        }
+        @media (min-width: 768px) {
+          .dashboard { padding: 1.5rem 2rem; }
+        }
+
+        /* BACKGROUND */
+        .dashboard-bg {
+          position: fixed;
+          inset: 0;
+          overflow: hidden;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .bg-gradient {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(ellipse at 0% 0%, rgba(102,126,234,0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 100% 0%, rgba(240,147,251,0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at 100% 100%, rgba(42,245,152,0.08) 0%, transparent 50%),
+            linear-gradient(180deg, #030014 0%, #0a0520 50%, #050210 100%);
+        }
+        .bg-glow {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse at 30% 20%, rgba(102,126,234,0.05) 0%, transparent 50%);
+          animation: glowPulse 10s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.8; }
+        }
+        @media (max-width: 640px) {
+          .bg-glow { animation: none; opacity: 0.5; }
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(0.95); }
+        }
+
+        /* TOAST */
+        .toast-container {
+          position: fixed;
+          top: 1rem;
+          right: 1rem;
+          z-index: 1000;
+          animation: fadeInUp 0.3s ease-out;
+        }
+        .toast {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.875rem 1rem;
+          border-radius: 0.875rem;
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255,255,255,0.1);
+          min-width: 280px;
+          box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+        }
+        .toast-success { background: rgba(42,245,152,0.15); }
+        .toast-error { background: rgba(255,65,108,0.15); }
+        .toast-info { background: rgba(102,126,234,0.15); }
+        .toast-warning { background: rgba(245,175,25,0.15); }
+        .toast-icon { flex-shrink: 0; }
+        .toast-success .toast-icon { color: #2af598; }
+        .toast-error .toast-icon { color: #ff416c; }
+        .toast-info .toast-icon { color: #667eea; }
+        .toast-warning .toast-icon { color: #f5af19; }
+        .toast-message { flex: 1; font-size: 0.875rem; color: white; font-weight: 500; }
+        .toast-close {
+          padding: 0.25rem;
+          border-radius: 0.375rem;
+          background: transparent;
+          border: none;
+          color: rgba(255,255,255,0.5);
+          cursor: pointer;
+        }
+
+        /* ALERTS */
+        .alerts-section {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          margin-bottom: 1.25rem;
+          animation: fadeInUp 0.4s ease-out;
+        }
+        .alert-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.875rem;
+          padding: 1rem;
+          border-radius: 1rem;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255,255,255,0.08);
+        }
+        .alert-danger { background: linear-gradient(135deg, rgba(255,107,157,0.1), rgba(255,65,108,0.05)); border-color: rgba(255,107,157,0.2); }
+        .alert-warning { background: linear-gradient(135deg, rgba(245,175,25,0.1), rgba(252,246,186,0.05)); border-color: rgba(245,175,25,0.2); }
+        .alert-success { background: linear-gradient(135deg, rgba(42,245,152,0.1), rgba(18,194,233,0.05)); border-color: rgba(42,245,152,0.2); }
+        .alert-info { background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(240,147,251,0.05)); border-color: rgba(102,126,234,0.2); }
+        .alert-icon { padding: 0.5rem; border-radius: 0.625rem; flex-shrink: 0; }
+        .alert-icon-danger { background: rgba(255,107,157,0.2); color: #ff6b9d; }
+        .alert-icon-warning { background: rgba(245,175,25,0.2); color: #f5af19; }
+        .alert-icon-success { background: rgba(42,245,152,0.2); color: #2af598; }
+        .alert-icon-info { background: rgba(102,126,234,0.2); color: #667eea; }
+        .alert-content { flex: 1; min-width: 0; }
+        .alert-title { font-size: 0.875rem; font-weight: 600; color: white; margin-bottom: 0.25rem; }
+        .alert-message { font-size: 0.8125rem; color: rgba(255,255,255,0.7); line-height: 1.4; }
+
+        /* HEADER */
+        .dashboard-header {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          animation: fadeInUp 0.4s ease-out;
+        }
+        .header-left { display: flex; align-items: center; gap: 0.875rem; }
+        .header-logo {
+          position: relative;
+          padding: 0.875rem;
+          border-radius: 1rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          box-shadow: 0 10px 30px -10px rgba(102,126,234,0.5);
+        }
+        .header-crown {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          padding: 4px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #bf953f, #fcf6ba);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .header-info { display: flex; flex-direction: column; gap: 0.25rem; }
+        .header-title { display: flex; align-items: center; gap: 0.625rem; flex-wrap: wrap; }
+        .title-gradient {
+          font-size: 1.25rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        @media (min-width: 640px) { .title-gradient { font-size: 1.5rem; } }
+        .header-badge {
+          padding: 0.25rem 0.5rem;
+          border-radius: 0.375rem;
+          font-size: 0.625rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          background: linear-gradient(135deg, #667eea, #f093fb);
+          color: white;
+        }
+        .header-subtitle { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+        .header-right { display: flex; align-items: center; gap: 0.625rem; }
+        .header-welcome { display: none; }
+        @media (min-width: 768px) { .header-welcome { display: block; margin-right: 0.5rem; } }
+        .welcome-text { font-size: 0.875rem; font-weight: 500; color: white; }
+        .header-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.5rem 0.875rem;
+          border-radius: 0.625rem;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          border: none;
+          cursor: pointer;
+          transition: transform 0.15s;
+        }
+        .header-btn:hover { transform: translateY(-1px); }
+        .btn-ghost { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-danger { background: linear-gradient(135deg, #ff416c, #ff4b2b); color: white; }
+        .btn-text { display: none; }
+        @media (min-width: 640px) { .btn-text { display: inline; } }
+
+        /* BALANCE CARD */
+        .balance-card {
+          padding: 1.5rem;
+          border-radius: 1.25rem;
+          background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(240,147,251,0.05));
+          border: 1px solid rgba(102,126,234,0.15);
+          backdrop-filter: blur(10px);
+          margin-bottom: 1.25rem;
+          animation: fadeInUp 0.4s ease-out 0.1s both;
+        }
+        @media (min-width: 640px) { .balance-card { padding: 2rem; } }
+        .balance-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+        .balance-left { display: flex; align-items: center; gap: 0.875rem; }
+        .balance-icon { padding: 0.75rem; border-radius: 0.875rem; background: rgba(102,126,234,0.15); }
+        .balance-info { display: flex; flex-direction: column; gap: 0.25rem; }
+        .balance-label { font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.05em; }
+        .balance-live {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.25rem 0.5rem;
+          border-radius: 0.375rem;
+          font-size: 0.625rem;
+          font-weight: 700;
+          background: rgba(42,245,152,0.15);
+          color: #2af598;
+          width: fit-content;
+        }
+        .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #2af598; animation: pulse 1.5s ease-in-out infinite; }
+        .balance-toggle {
+          padding: 0.625rem;
+          border-radius: 0.625rem;
+          background: rgba(255,255,255,0.05);
+          border: none;
+          color: #667eea;
+          cursor: pointer;
+        }
+        .balance-amount { margin-bottom: 1.5rem; }
+        .amount-value { font-size: 2.25rem; font-weight: 800; }
+        @media (min-width: 640px) { .amount-value { font-size: 3rem; } }
+        .amount-value.positive {
+          background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #2af598);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .amount-value.negative {
+          background: linear-gradient(135deg, #ff416c, #ff4b2b);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .amount-hidden { font-size: 2.25rem; font-weight: 800; color: rgba(255,255,255,0.25); }
+        .balance-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; margin-bottom: 1rem; }
+        .stat-box { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; border-radius: 0.875rem; }
+        .stat-income { background: rgba(42,245,152,0.08); border: 1px solid rgba(42,245,152,0.15); }
+        .stat-expense { background: rgba(255,107,157,0.08); border: 1px solid rgba(255,107,157,0.15); }
+        .stat-icon-box { padding: 0.5rem; border-radius: 0.5rem; }
+        .stat-icon-box.income { background: rgba(42,245,152,0.2); color: #2af598; }
+        .stat-icon-box.expense { background: rgba(255,107,157,0.2); color: #ff6b9d; }
+        .stat-info { display: flex; flex-direction: column; gap: 0.125rem; }
+        .stat-label { font-size: 0.625rem; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+        .stat-value { font-size: 1rem; font-weight: 700; }
+        @media (min-width: 640px) { .stat-value { font-size: 1.125rem; } }
+        .balance-footer {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1rem;
+          border-radius: 0.75rem;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.05);
+          font-size: 0.8125rem;
+          color: rgba(255,255,255,0.7);
+        }
+
+        /* QUICK STATS */
+        .quick-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.875rem;
+          margin-bottom: 1.25rem;
+          animation: fadeInUp 0.4s ease-out 0.2s both;
+        }
+        .quick-stat-card {
+          padding: 1rem;
+          border-radius: 1rem;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255,255,255,0.08);
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        .stat-crystal { background: linear-gradient(135deg, rgba(42,245,152,0.1), rgba(18,194,233,0.05)); border-color: rgba(42,245,152,0.15); }
+        .stat-pink { background: linear-gradient(135deg, rgba(255,107,157,0.1), rgba(196,113,237,0.05)); border-color: rgba(255,107,157,0.15); }
+        .qs-icon { padding: 0.625rem; border-radius: 0.625rem; }
+        .qs-icon.crystal { background: rgba(42,245,152,0.2); color: #2af598; }
+        .qs-icon.pink { background: rgba(255,107,157,0.2); color: #ff6b9d; }
+        .qs-info { display: flex; flex-direction: column; gap: 0.125rem; }
+        .qs-label { font-size: 0.625rem; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+        .qs-value { font-size: 1.125rem; font-weight: 700; }
+        .qs-value.crystal { color: #2af598; }
+        .qs-value.pink { color: #ff6b9d; }
+
+        /* CONTENT GRID */
+        .content-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+        @media (min-width: 1024px) { .content-grid { grid-template-columns: 1.4fr 1fr; } }
+        .content-left, .content-right { display: flex; flex-direction: column; gap: 1rem; }
+
+        /* CHARTS */
+        .charts-row { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        @media (min-width: 640px) { .charts-row { grid-template-columns: 1fr 1fr; } }
+        .chart-card {
+          padding: 1.25rem;
+          border-radius: 1rem;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255,255,255,0.08);
+          animation: fadeInUp 0.4s ease-out 0.3s both;
+        }
+        .card-aurora { background: linear-gradient(135deg, rgba(102,126,234,0.08), rgba(240,147,251,0.03)); border-color: rgba(102,126,234,0.12); }
+        .card-crystal { background: linear-gradient(135deg, rgba(42,245,152,0.06), rgba(18,194,233,0.03)); border-color: rgba(42,245,152,0.1); }
+        .card-pink { background: linear-gradient(135deg, rgba(255,107,157,0.06), rgba(196,113,237,0.03)); border-color: rgba(255,107,157,0.1); }
+        .card-gold { background: linear-gradient(135deg, rgba(191,149,63,0.08), rgba(252,246,186,0.03)); border-color: rgba(191,149,63,0.12); }
+        .chart-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .chart-icon { padding: 0.5rem; border-radius: 0.5rem; }
+        .chart-icon.aurora { background: rgba(102,126,234,0.2); color: #667eea; }
+        .chart-icon.crystal { background: rgba(42,245,152,0.2); color: #2af598; }
+        .chart-info { display: flex; flex-direction: column; gap: 0.125rem; }
+        .chart-title { font-size: 0.875rem; font-weight: 600; color: white; }
+        .chart-subtitle { font-size: 0.6875rem; color: rgba(255,255,255,0.5); }
+        .chart-body { min-height: 200px; }
+        .chart-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; gap: 0.5rem; color: rgba(255,255,255,0.3); }
+        .chart-empty p { font-size: 0.75rem; }
+        .chart-tooltip {
+          padding: 0.5rem 0.75rem;
+          border-radius: 0.5rem;
+          background: rgba(10,5,32,0.95);
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .chart-tooltip-label { font-size: 0.625rem; color: #667eea; margin-bottom: 0.125rem; }
+        .chart-tooltip-value { font-size: 0.875rem; font-weight: 700; color: white; }
+
+        /* TRANSACTIONS */
+        .transactions-card {
+          padding: 1.25rem;
+          border-radius: 1rem;
+          backdrop-filter: blur(10px);
+          animation: fadeInUp 0.4s ease-out 0.4s both;
+        }
+        .transactions-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .transactions-info { display: flex; align-items: center; gap: 0.75rem; }
+        .transactions-icon { padding: 0.5rem; border-radius: 0.5rem; background: rgba(255,107,157,0.2); color: #ff6b9d; }
+        .transactions-title { font-size: 0.875rem; font-weight: 600; color: white; }
+        .transactions-count { font-size: 0.6875rem; color: rgba(255,255,255,0.5); }
+        .view-all-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #ff6b9d;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+        }
+        .transactions-body { min-height: 200px; }
+        .transactions-loading, .transactions-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 200px;
+          gap: 0.5rem;
+          color: rgba(255,255,255,0.3);
+        }
+        .spinner {
+          width: 2rem;
+          height: 2rem;
+          border: 3px solid rgba(255,107,157,0.2);
+          border-top-color: #ff6b9d;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+        .transactions-list { display: flex; flex-direction: column; gap: 0.625rem; max-height: 300px; overflow-y: auto; padding-right: 0.5rem; }
+        .transactions-list::-webkit-scrollbar { width: 4px; }
+        .transactions-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
+        .transactions-list::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea, #f093fb); border-radius: 10px; }
+        .transaction-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.75rem;
+          border-radius: 0.75rem;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.05);
+          transition: transform 0.15s;
+        }
+        .transaction-item:hover { transform: translateX(3px); }
+        .tx-left { display: flex; align-items: center; gap: 0.625rem; }
+        .tx-icon { padding: 0.375rem; border-radius: 0.375rem; }
+        .tx-icon.income { background: rgba(42,245,152,0.2); color: #2af598; }
+        .tx-icon.expense { background: rgba(255,107,157,0.2); color: #ff6b9d; }
+        .tx-details { display: flex; flex-direction: column; gap: 0.125rem; }
+        .tx-category { font-size: 0.8125rem; font-weight: 600; color: white; }
+        .tx-meta { font-size: 0.6875rem; color: rgba(255,255,255,0.5); }
+        .tx-amount { font-size: 0.9375rem; font-weight: 700; }
+        .tx-amount.income { color: #2af598; }
+        .tx-amount.expense { color: #ff6b9d; }
+
+        /* GOAL CARD */
+        .goal-card {
+          padding: 1.25rem;
+          border-radius: 1rem;
+          backdrop-filter: blur(10px);
+          animation: fadeInUp 0.4s ease-out 0.3s both;
+        }
+        .goal-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .goal-icon { padding: 0.5rem; border-radius: 0.5rem; background: rgba(191,149,63,0.2); color: #f5af19; }
+        .goal-info { display: flex; flex-direction: column; gap: 0.125rem; }
+        .goal-title { font-size: 0.875rem; font-weight: 600; color: white; }
+        .goal-subtitle { font-size: 0.6875rem; color: rgba(255,255,255,0.5); }
+        .goal-progress-section { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.25rem; }
+        .progress-ring-container { position: relative; width: 120px; height: 120px; margin-bottom: 0.75rem; }
+        .progress-ring { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .progress-bg { fill: none; stroke: rgba(255,255,255,0.08); }
+        .progress-bar { fill: none; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease-out; }
+        .progress-text {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        .progress-percent {
+          font-size: 1.5rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #667eea, #f093fb);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .progress-label { font-size: 0.625rem; color: rgba(255,255,255,0.5); }
+        .goal-name {
+          font-size: 1rem;
+          font-weight: 700;
+          color: #fcf6ba;
+          margin-bottom: 0.75rem;
+        }
+        .goal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%; margin-bottom: 0.75rem; }
+        .goal-stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 0.5rem;
+          border-radius: 0.5rem;
+          background: rgba(255,255,255,0.03);
+        }
+        .gs-label { font-size: 0.5625rem; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+        .gs-value { font-size: 0.8125rem; font-weight: 700; }
+        .gs-value.gold { color: #fcf6ba; }
+        .gs-value.green { color: #2af598; }
+        .gs-value.pink { color: #ff6b9d; }
+        .gs-value.blue { color: #667eea; }
+        .track-badge {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.375rem 0.75rem;
+          border-radius: 0.5rem;
+          font-size: 0.6875rem;
+          font-weight: 600;
+        }
+        .track-badge.on-track { background: rgba(42,245,152,0.15); color: #2af598; }
+        .track-badge.off-track { background: rgba(255,107,157,0.15); color: #ff6b9d; }
+        .goal-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem 0;
+          gap: 0.5rem;
+          color: rgba(255,255,255,0.3);
+          margin-bottom: 1rem;
+        }
+        .goal-empty p { font-size: 0.75rem; }
+        .goal-form { display: flex; flex-direction: column; gap: 0.625rem; }
+
+        /* ADD CARD */
+        .add-card {
+          padding: 1.25rem;
+          border-radius: 1rem;
+          backdrop-filter: blur(10px);
+          animation: fadeInUp 0.4s ease-out 0.4s both;
+        }
+        .add-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .add-icon { padding: 0.5rem; border-radius: 0.5rem; background: rgba(102,126,234,0.2); color: #667eea; }
+        .add-info { display: flex; flex-direction: column; gap: 0.125rem; }
+        .add-title { font-size: 0.875rem; font-weight: 600; color: white; }
+        .add-subtitle { font-size: 0.6875rem; color: rgba(255,255,255,0.5); }
+        .add-form { display: flex; flex-direction: column; gap: 0.625rem; }
+
+        /* FORMS */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+        .input-with-icon { position: relative; }
+        .input-icon {
+          position: absolute;
+          left: 0.75rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: rgba(255,255,255,0.3);
+          z-index: 1;
+        }
+        .form-input {
+          width: 100%;
+          padding: 0.75rem;
+          border-radius: 0.625rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: white;
+          font-size: 0.8125rem;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .form-input:focus { border-color: #667eea; }
+        .form-input::placeholder { color: rgba(255,255,255,0.3); }
+        .input-with-icon .form-input { padding-left: 2.5rem; }
+        .form-select {
+          width: 100%;
+          padding: 0.75rem;
+          border-radius: 0.625rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: white;
+          font-size: 0.8125rem;
+          outline: none;
+          cursor: pointer;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+          background-position: right 10px center;
+          background-repeat: no-repeat;
+          background-size: 16px;
+        }
+        .form-select option { background: #0a0520; color: white; }
+        .form-textarea {
+          width: 100%;
+          padding: 0.75rem;
+          border-radius: 0.625rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: white;
+          font-size: 0.8125rem;
+          outline: none;
+          resize: none;
+        }
+        .form-textarea::placeholder { color: rgba(255,255,255,0.3); }
+        .form-error { font-size: 0.75rem; color: #ff6b9d; text-align: center; margin-top: 0.5rem; }
+
+        /* BUTTONS */
+        .btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1rem;
+          border-radius: 0.625rem;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          border: none;
+          cursor: pointer;
+          transition: transform 0.15s, opacity 0.15s;
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-full { width: 100%; }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2, #f093fb); color: white; box-shadow: 0 5px 20px -5px rgba(102,126,234,0.4); }
+        .btn-gold { background: linear-gradient(135deg, #bf953f, #fcf6ba, #bf953f); color: #000; box-shadow: 0 5px 20px -5px rgba(191,149,63,0.4); }
+        .btn-spinner {
+          width: 1rem;
+          height: 1rem;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+
+        /* FOOTER */
+        .dashboard-footer {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          margin-top: 2.5rem;
+          font-size: 0.75rem;
+          color: rgba(255,255,255,0.4);
+          animation: fadeInUp 0.4s ease-out 0.5s both;
+        }
+        .footer-dot { color: #667eea; }
+        .footer-edition {
+          background: linear-gradient(135deg, #667eea, #f093fb);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          font-weight: 700;
+        }
+
+        /* UTILITY */
+        .text-emerald-400 { color: #2af598; }
+        .text-rose-400 { color: #ff6b9d; }
+        .text-indigo-400 { color: #667eea; }
+        .text-white { color: white; }
+        .text-black { color: black; }
+
         ::selection { background: rgba(102,126,234,0.3); color: white; }
+
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
       `}</style>
     </AppShell>
   );
 }
-
-export default Dashboard;
