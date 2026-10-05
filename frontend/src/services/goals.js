@@ -1,7 +1,8 @@
 // frontend/src/services/goals.js
 
-const API_URL =
-  "https://smart-expense-tracker-0fnu.onrender.com/api/goals";
+import BASE_URL from "./config";
+
+const API_URL = `${BASE_URL}/api/goals`;
 
 
 export async function saveGoal(payload) {

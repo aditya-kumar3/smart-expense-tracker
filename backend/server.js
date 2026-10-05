@@ -7,15 +7,10 @@ const connectDB = require("./config/db");
 
 dotenv.config();
 
-console.log("SERVER FILE LOADED");
-
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// debug env
-console.log("Loaded MONGO_URI:", process.env.MONGO_URI);
 
 // connect to database
 connectDB();
@@ -42,6 +37,10 @@ app.use("/api/alerts", require("./routes/alertRoutes"));
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server Started on Port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server Started on Port ${PORT}`);
+  });
+}
+
+module.exports = app;
