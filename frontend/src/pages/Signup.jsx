@@ -15,8 +15,7 @@ import {
   Rocket,
   Gift,
 } from "lucide-react";
-
-const BASE_URL = "https://smart-expense-tracker-0fnu.onrender.com";
+import BASE_URL from "../services/config";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🎨 LIGHT BACKGROUND - No heavy effects

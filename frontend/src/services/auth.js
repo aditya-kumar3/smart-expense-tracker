@@ -1,7 +1,6 @@
 // frontend/src/services/auth.js
 
-const BASE_URL =
-  "https://smart-expense-tracker-0fnu.onrender.com";
+import BASE_URL from "./config";
 
 // LOGIN
 export async function loginUser(credentials) {

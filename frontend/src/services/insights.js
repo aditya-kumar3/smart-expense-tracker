@@ -1,5 +1,4 @@
-const BASE_URL =
-  "https://smart-expense-tracker-0fnu.onrender.com";
+import BASE_URL from "./config";
 
 export async function fetchInsights(userId) {
   try {
